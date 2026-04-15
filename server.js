@@ -12,7 +12,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 // Game constants
 const ROUNDS_PER_GAME = 5;
-const ROUND_TIME_SECONDS = 60;
+const ROUND_TIME_SECONDS = 30;
 const CORRECT_POINTS = 5;
 const FIRST_BONUS = 2;
 
