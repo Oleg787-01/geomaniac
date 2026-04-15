@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>GeoManiac</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- LANDING SCREEN -->
+  <div id="screen-landing" class="screen active">
+    <div class="landing-bg"></div>
+    <div class="landing-content">
+      <div class="logo">
+        <span class="logo-geo">Geo</span><span class="logo-maniac">Maniac</span>
+      </div>
+      <p class="tagline">Master world geography. Challenge your friends.</p>
+      <div class="card">
+        <label for="player-name">Your Name</label>
+        <input id="player-name" type="text" placeholder="Enter your name..." maxlength="20" autocomplete="off" />
+
+        <div class="btn-row">
+          <button id="btn-create" class="btn btn-primary">Create Room</button>
+          <button id="btn-show-join" class="btn btn-secondary">Join Room</button>
+        </div>
+
+        <div id="join-panel" class="join-panel hidden">
+          <input id="room-code-input" type="text" placeholder="Room code (e.g. ABC123)" maxlength="6" autocomplete="off" />
+          <button id="btn-join" class="btn btn-primary">Join</button>
+        </div>
+
+        <p id="landing-error" class="error-msg hidden"></p>
+      </div>
+    </div>
+  </div>
+
+  <!-- LOBBY SCREEN -->
+  <div id="screen-lobby" class="screen">
+    <div class="lobby-header">
+      <div class="logo small">
+        <span class="logo-geo">Geo</span><span class="logo-maniac">Maniac</span>
+      </div>
+    </div>
+    <div class="lobby-content">
+      <div class="room-code-display">
+        <span class="room-label">Room Code</span>
+        <span id="display-room-code" class="room-code">------</span>
+        <button id="btn-copy-code" class="btn btn-ghost" title="Copy code">Copy</button>
+      </div>
+      <div class="card">
+        <h2>Players <span id="player-count">(0/8)</span></h2>
+        <ul id="player-list" class="player-list"></ul>
+        <div id="lobby-host-controls" class="hidden">
+          <p class="host-tip">You are the host. Invite friends with the room code above.</p>
+          <button id="btn-start" class="btn btn-primary btn-large">Start Game</button>
+        </div>
+        <div id="lobby-waiting" class="hidden">
+          <p class="waiting-msg">Waiting for the host to start the game...</p>
+        </div>
+        <p id="lobby-error" class="error-msg hidden"></p>
+      </div>
+      <div class="game-info-box">
+        <h3>Outline Guess</h3>
+        <ul class="rules-list">
+          <li>A country silhouette is shown each round</li>
+          <li>Type the country name to guess</li>
+          <li>First correct answer: <strong>7 pts</strong> (5 + 2 bonus)</li>
+          <li>Other correct answers: <strong>5 pts</strong></li>
+          <li>5 rounds total &mdash; most points wins!</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- GAME SCREEN -->
+  <div id="screen-game" class="screen">
+    <div class="game-header">
+      <div class="logo small"><span class="logo-geo">Geo</span><span class="logo-maniac">Maniac</span></div>
+      <div class="round-info">
+        Round <span id="current-round">1</span> / <span id="total-rounds">5</span>
+      </div>
+      <div class="timer-wrap">
+        <div id="timer-bar-fill" class="timer-bar-fill"></div>
+        <span id="timer-text" class="timer-text">60</span>
+      </div>
+    </div>
+
+    <div class="game-body">
+      <div class="country-display">
+        <div id="country-svg-wrap">
+          <svg id="country-svg" viewBox="0 0 500 400" preserveAspectRatio="xMidYMid meet"></svg>
+          <div id="svg-loading" class="svg-loading">Loading map data...</div>
+        </div>
+      </div>
+
+      <div class="game-sidebar">
+        <div class="guess-area" id="guess-area">
+          <h3>What country is this?</h3>
+          <input id="guess-input" type="text" placeholder="Type country name..." maxlength="60" autocomplete="off" />
+          <div class="guess-btn-row">
+            <button id="btn-submit-guess" class="btn btn-primary">Submit</button>
+            <button id="btn-give-up" class="btn btn-ghost">Give Up</button>
+          </div>
+          <p id="guess-feedback" class="guess-feedback hidden"></p>
+        </div>
+
+        <div class="score-panel">
+          <h3>Scores</h3>
+          <ul id="score-list" class="score-list"></ul>
+        </div>
+
+        <div id="guessed-list-wrap" class="guessed-wrap">
+          <h4>Guessed</h4>
+          <ul id="guessed-list" class="guessed-list"></ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- Round end overlay -->
+    <div id="round-overlay" class="round-overlay hidden">
+      <div class="overlay-card">
+        <div class="overlay-label">The country was</div>
+        <div id="overlay-country-name" class="overlay-country"></div>
+        <div id="overlay-points" class="overlay-points"></div>
+        <div class="overlay-next" id="overlay-next-text">Next round starting...</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- GAME END SCREEN -->
+  <div id="screen-results" class="screen">
+    <div class="results-wrap">
+      <div class="logo"><span class="logo-geo">Geo</span><span class="logo-maniac">Maniac</span></div>
+      <h2 class="results-title">Game Over!</h2>
+      <div id="winner-banner" class="winner-banner"></div>
+      <ol id="results-list" class="results-list"></ol>
+      <div id="results-host-controls" class="hidden">
+        <button id="btn-play-again" class="btn btn-primary btn-large">Play Again</button>
+      </div>
+      <div id="results-waiting" class="hidden">
+        <p class="waiting-msg">Waiting for host to start a new game...</p>
+      </div>
+    </div>
+  </div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/topojson-client@3/dist/topojson-client.min.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

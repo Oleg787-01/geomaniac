@@ -1,0 +1,21 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(bash --version)",
+      "Bash(npm install:*)",
+      "Bash(winget install:*)",
+      "Bash(export PATH=\"$PATH:/c/Program Files/nodejs\")",
+      "Bash(npm --version)",
+      "Bash(export PATH=\"$PATH:/c/Program Files/nodejs:/c/Users/olegu/AppData/Roaming/npm\")",
+      "Bash(railway --version)",
+      "Bash(railway login:*)",
+      "Bash(export RAILWAY_TOKEN=6f3c9d19-572f-4e0d-bff6-2d4cbc5c667f)",
+      "Bash(railway init:*)",
+      "Bash(railway whoami:*)",
+      "Bash(git init:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git config:*)"
+    ]
+  }
+}
