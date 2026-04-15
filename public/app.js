@@ -357,7 +357,7 @@ socket.on('guessResult', ({ correct, points, isFirst, gaveUp }) => {
     showGuessFeedback('You gave up this round.', 'gave-up');
   } else {
     // One guess only — wrong = locked out for the round
-    showGuessFeedback('Wrong! Wait for the round to end.', 'wrong');
+    showGuessFeedback('Answer Submitted', 'correct');
   }
 });
 
@@ -378,14 +378,20 @@ socket.on('roundEnd', ({ correctAnswer, scores, round, totalRounds }) => {
   renderScores(scores);
 });
 
-socket.on('gameEnd', ({ results, winner }) => {
+socket.on('gameEnd', ({ results, winner, isDraw, drawPlayers }) => {
   $roundOverlay.classList.add('hidden');
-  $winnerBanner.textContent = winner ? `🏆 Winner: ${winner.name} (${winner.score} pts)` : 'Game Over!';
+  if (isDraw) {
+    $winnerBanner.textContent = `🤝 It's a Draw! ${drawPlayers.join(' & ')} tied with ${results[0].score} pts`;
+  } else {
+    $winnerBanner.textContent = winner ? `🏆 Winner: ${winner.name} (${winner.score} pts)` : 'Game Over!';
+  }
   $resultsList.innerHTML = '';
   const medals = ['🥇','🥈','🥉'];
+  let displayRank = 1;
   results.forEach((p, i) => {
+    if (i > 0 && p.score < results[i - 1].score) displayRank = i + 1;
     const li = document.createElement('li');
-    const rank = document.createElement('span'); rank.className = 'result-rank'; rank.textContent = medals[i] || (i+1)+'.';
+    const rank = document.createElement('span'); rank.className = 'result-rank'; rank.textContent = medals[displayRank - 1] || displayRank + '.';
     const name = document.createElement('span'); name.className = 'result-name'; name.textContent = p.name;
     const score = document.createElement('span'); score.className = 'result-score'; score.textContent = p.score + ' pts';
     li.appendChild(rank); li.appendChild(name); li.appendChild(score);

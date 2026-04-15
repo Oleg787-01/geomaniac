@@ -98,10 +98,15 @@ function endGame(roomCode) {
 
   room.gameState = 'gameEnd';
   const sorted = [...room.players].sort((a, b) => b.score - a.score);
+  const topScore = sorted[0].score;
+  const topPlayers = sorted.filter(p => p.score === topScore);
+  const isDraw = topPlayers.length > 1;
 
   io.to(roomCode).emit('gameEnd', {
     results: sorted.map(p => ({ id: p.id, name: p.name, score: p.score })),
-    winner: sorted[0],
+    winner: isDraw ? null : sorted[0],
+    isDraw,
+    drawPlayers: isDraw ? topPlayers.map(p => p.name) : [],
   });
 }
 
