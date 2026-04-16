@@ -23,63 +23,23 @@
     </div>
   </div>
 
-  <!-- GAMEMODE -->
-  <div id="screen-gamemode" class="screen">
+  <!-- HOME -->
+  <div id="screen-home" class="screen">
     <div class="top-bar">
-      <div class="logo small logo-clickable" id="logo-gamemode"><span class="logo-geo">Geo</span><span class="logo-maniac">Maniac</span></div>
+      <div class="logo small logo-clickable" id="logo-home"><span class="logo-geo">Geo</span><span class="logo-maniac">Maniac</span></div>
       <div class="player-chip">
-        <span class="player-chip-av" id="gamemode-avatar"></span>
-        <span id="gamemode-player-name"></span>
+        <span class="player-chip-av" id="home-avatar"></span>
+        <span id="home-player-name"></span>
         <button id="btn-change-name" class="btn-text">Change</button>
       </div>
     </div>
-    <div class="gamemode-content">
-      <h2 class="gamemode-title">Choose a Game Mode</h2>
-      <div class="modes-grid">
-
-        <div class="mode-card" id="mode-outline">
-          <div class="mode-icon">🗺️</div>
-          <h3>Outline Guess</h3>
-          <p>Identify countries from their black silhouette. 5 rounds, one guess per round — first correct answer gets a bonus!</p>
-          <div class="mode-rules">
-            <span class="rule-chip correct-chip">✓ First: +7 pts</span>
-            <span class="rule-chip correct-chip">✓ Correct: +5 pts</span>
-            <span class="rule-chip neutral-chip">5 rounds</span>
-          </div>
-          <button class="btn btn-primary mode-btn">Play</button>
-        </div>
-
-        <div class="mode-card" id="mode-flag">
-          <div class="mode-icon">🏴</div>
-          <h3>Guess the Flag</h3>
-          <p>Identify countries from their national flag. Multiple guesses allowed — but wrong answers cost you points!</p>
-          <div class="mode-rules">
-            <span class="rule-chip correct-chip">✓ First: +7 pts</span>
-            <span class="rule-chip correct-chip">✓ Correct: +5 pts</span>
-            <span class="rule-chip wrong-chip">✗ Wrong: −2 pts</span>
-            <span class="rule-chip neutral-chip">First to 25 wins</span>
-          </div>
-          <button class="btn btn-primary mode-btn">Play</button>
-        </div>
-
-      </div>
-    </div>
-  </div>
-
-  <!-- ROOM -->
-  <div id="screen-room" class="screen">
-    <div class="top-bar">
-      <div class="logo small logo-clickable" id="logo-room"><span class="logo-geo">Geo</span><span class="logo-maniac">Maniac</span></div>
-      <span class="top-bar-mode-label" id="room-mode-label">Outline Guess</span>
-    </div>
-    <div class="room-content">
-      <div class="card room-card">
-        <h2>Create or Join a Room</h2>
+    <div class="home-content">
+      <div class="card home-card">
         <button id="btn-create-room" class="btn btn-primary btn-large">Create Room</button>
         <div class="or-divider"><span>or</span></div>
         <div class="join-row">
           <input id="room-code-input" type="text" placeholder="Room code (e.g. ABC123)" maxlength="6" autocomplete="off" />
-          <button id="btn-join-room" class="btn btn-secondary">Join</button>
+          <button id="btn-join-room" class="btn btn-secondary">Join Room</button>
         </div>
         <p id="room-error" class="error-msg hidden"></p>
       </div>
@@ -101,6 +61,28 @@
       <div class="card">
         <h2>Players <span id="player-count">(0/8)</span></h2>
         <ul id="player-list" class="player-list"></ul>
+
+        <!-- Mode picker — host only -->
+        <div id="lobby-mode-selector" class="lobby-mode-selector hidden">
+          <p class="mode-select-label">Game Mode</p>
+          <div class="mode-select-row">
+            <div class="mode-select-opt selected" id="mode-opt-outline" data-mode="outline">
+              <span class="mode-opt-icon">🗺️</span>
+              <div>
+                <div class="mode-opt-name">Outline Guess</div>
+                <div class="mode-opt-desc">5 rounds · no penalty</div>
+              </div>
+            </div>
+            <div class="mode-select-opt" id="mode-opt-flag" data-mode="flag">
+              <span class="mode-opt-icon">🏴</span>
+              <div>
+                <div class="mode-opt-name">Guess the Flag</div>
+                <div class="mode-opt-desc">First to 25 · −2 wrong</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <div id="lobby-host-controls" class="hidden">
           <p class="host-tip">You are the host. Share the room code above.</p>
           <button id="btn-start" class="btn btn-primary btn-large">Start Game</button>

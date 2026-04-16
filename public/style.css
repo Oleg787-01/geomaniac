@@ -65,35 +65,25 @@ input[type="text"]:focus { border-color: var(--accent); }
 .landing-content { position: relative; z-index: 1; display: flex; flex-direction: column; align-items: center; gap: 24px; width: 100%; max-width: 400px; padding: 24px; }
 .tagline { color: var(--text-muted); font-size: 1rem; text-align: center; }
 
-/* ════════════════ GAMEMODE ════════════════ */
-#screen-gamemode { flex-direction: column; }
-.gamemode-content { flex: 1; display: flex; flex-direction: column; align-items: center; padding: 48px 24px 32px; gap: 36px; }
-.gamemode-title { font-size: 1.6rem; font-weight: 700; }
-
-.modes-grid { display: flex; gap: 24px; flex-wrap: wrap; justify-content: center; width: 100%; max-width: 780px; }
-
-.mode-card { background: var(--surface); border: 2px solid var(--border); border-radius: 14px; padding: 32px 28px; width: 340px; display: flex; flex-direction: column; align-items: center; gap: 12px; text-align: center; box-shadow: var(--shadow); transition: border-color 0.2s, transform 0.15s; }
-.mode-card:hover { border-color: var(--accent); transform: translateY(-3px); }
-.mode-icon { font-size: 3rem; line-height: 1; }
-.mode-card h3 { font-size: 1.2rem; font-weight: 700; }
-.mode-card p { font-size: 0.88rem; color: var(--text-muted); line-height: 1.5; }
-.mode-btn { width: 100%; margin-top: 4px; }
-
-.mode-rules { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; margin-top: 4px; }
-.rule-chip { font-size: 0.75rem; font-weight: 600; padding: 3px 10px; border-radius: 20px; }
-.correct-chip { background: rgba(63,185,80,0.15); color: var(--green); }
-.wrong-chip { background: rgba(248,81,73,0.12); color: var(--red); }
-.neutral-chip { background: var(--surface2); color: var(--text-muted); border: 1px solid var(--border); }
-
-/* ════════════════ ROOM ════════════════ */
-#screen-room { flex-direction: column; }
-.room-content { flex: 1; display: flex; align-items: center; justify-content: center; padding: 32px 24px; }
-.room-card { max-width: 400px; width: 100%; }
-.room-card h2 { font-size: 1.2rem; }
+/* ════════════════ HOME ════════════════ */
+#screen-home { flex-direction: column; }
+.home-content { flex: 1; display: flex; align-items: center; justify-content: center; padding: 32px 24px; }
+.home-card { max-width: 400px; width: 100%; }
 .or-divider { display: flex; align-items: center; gap: 12px; color: var(--text-muted); font-size: 0.85rem; }
 .or-divider::before, .or-divider::after { content: ''; flex: 1; height: 1px; background: var(--border); }
 .join-row { display: flex; gap: 8px; }
 .join-row input { flex: 1; text-transform: uppercase; letter-spacing: 2px; }
+
+/* ════════════════ LOBBY MODE PICKER ════════════════ */
+.lobby-mode-selector { display: flex; flex-direction: column; gap: 8px; }
+.mode-select-label { font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); }
+.mode-select-row { display: flex; gap: 10px; }
+.mode-select-opt { flex: 1; display: flex; align-items: center; gap: 10px; background: var(--surface2); border: 2px solid var(--border); border-radius: 8px; padding: 12px 14px; cursor: pointer; transition: border-color 0.15s, background 0.15s; user-select: none; }
+.mode-select-opt:hover { border-color: var(--text-muted); }
+.mode-select-opt.selected { border-color: var(--accent); background: rgba(88,166,255,0.08); }
+.mode-opt-icon { font-size: 1.4rem; flex-shrink: 0; }
+.mode-opt-name { font-size: 0.88rem; font-weight: 600; }
+.mode-opt-desc { font-size: 0.72rem; color: var(--text-muted); margin-top: 2px; }
 
 /* ════════════════ LOBBY ════════════════ */
 #screen-lobby { flex-direction: column; }
@@ -210,6 +200,5 @@ input[type="text"]:focus { border-color: var(--accent); }
   .game-body { flex-direction: column; }
   .game-sidebar { width: 100%; border-left: none; border-top: 1px solid var(--border); }
   .country-display { min-height: 240px; }
-  .modes-grid { flex-direction: column; align-items: center; }
-  .mode-card { width: 100%; max-width: 360px; }
+  .mode-select-row { flex-direction: column; }
 }

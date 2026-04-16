@@ -218,7 +218,7 @@ io.on('connection', (socket) => {
     };
     rooms.set(code, room);
     socket.join(code);
-    socket.emit('roomCreated', { code, players: room.players, isHost: true });
+    socket.emit('roomCreated', { code, players: room.players, isHost: true, gameMode: room.gameMode });
   });
 
   socket.on('joinRoom', ({ code, name }) => {
@@ -230,7 +230,7 @@ io.on('connection', (socket) => {
 
     room.players.push({ id: socket.id, name: name.trim(), score: 0 });
     socket.join(room.code);
-    socket.emit('roomJoined', { code: room.code, players: room.players, isHost: false });
+    socket.emit('roomJoined', { code: room.code, players: room.players, isHost: false, gameMode: room.gameMode });
     socket.to(room.code).emit('lobbyUpdate', { players: room.players });
   });
 
@@ -239,13 +239,23 @@ io.on('connection', (socket) => {
     removePlayerFromRoom(socket.id, socket);
   });
 
-  socket.on('startGame', ({ gameMode }) => {
+  socket.on('changeGameMode', ({ gameMode }) => {
+    if (gameMode !== 'outline' && gameMode !== 'flag') return;
+    for (const [code, room] of rooms) {
+      if (room.host === socket.id && room.gameState === 'lobby') {
+        room.gameMode = gameMode;
+        io.to(code).emit('gameModeChanged', { gameMode });
+        return;
+      }
+    }
+  });
+
+  socket.on('startGame', () => {
     for (const [code, room] of rooms) {
       if (room.host === socket.id && room.gameState === 'lobby') {
         room.players.forEach(p => { p.score = 0; });
         room.currentRound    = 0;
         room.usedCountryKeys = [];
-        room.gameMode        = gameMode || 'outline';
         startRound(code);
         return;
       }
@@ -337,7 +347,7 @@ io.on('connection', (socket) => {
         room.currentRound    = 0;
         room.usedCountryKeys = [];
         room.gameState       = 'lobby';
-        io.to(code).emit('backToLobby', { players: room.players });
+        io.to(code).emit('backToLobby', { players: room.players, gameMode: room.gameMode });
         return;
       }
     }

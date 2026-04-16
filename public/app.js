@@ -6,14 +6,14 @@ let myName         = '';
 let myRoomCode     = '';
 let isHost         = false;
 let myId           = null;
-let inRoom         = false;   // true only while in an active room
+let inRoom         = false;
 let currentGameMode = 'outline';
 let worldData       = null;
 let countriesData   = [];
 let timerInterval   = null;
 let timerTotal      = 30;
 let roundActive     = false;
-let hasSubmitted    = false;  // locked after one submission per round
+let hasSubmitted    = false;
 
 const AVATAR_COLORS = ['#58a6ff','#3fb950','#d29922','#f85149','#bc8cff','#ff7b72','#39d353','#56d364'];
 function avatarColor(n) { let h=0; for(let i=0;i<n.length;i++) h=(h*31+n.charCodeAt(i))&0xffffffff; return AVATAR_COLORS[Math.abs(h)%AVATAR_COLORS.length]; }
@@ -28,7 +28,7 @@ function saveName(n) { localStorage.setItem('geoManiacName', n); }
 function loadName()  { return localStorage.getItem('geoManiacName') || ''; }
 function clearName() { localStorage.removeItem('geoManiacName'); }
 
-// ── Go home: leave room, go to gamemode screen ──
+// ── Go home: leave room, go to home screen ──
 function goHome() {
   if (inRoom) {
     socket.emit('leaveRoom');
@@ -37,11 +37,11 @@ function goHome() {
   myRoomCode = '';
   isHost = false;
   const saved = loadName();
-  if (saved) { myName = saved; showGamemodeScreen(); }
+  if (saved) { myName = saved; showHomeScreen(); }
   else showScreen('screen-landing');
 }
 
-['logo-gamemode','logo-room','logo-lobby','logo-game','logo-results'].forEach(id => {
+['logo-home','logo-lobby','logo-game','logo-results'].forEach(id => {
   document.getElementById(id).addEventListener('click', goHome);
 });
 
@@ -56,15 +56,17 @@ $nameInput.addEventListener('keydown', e => { if (e.key === 'Enter') doLandingCo
 function doLandingContinue() {
   const name = $nameInput.value.trim();
   if (!name) { $landingError.textContent = 'Please enter your name.'; $landingError.classList.remove('hidden'); return; }
-  myName = name; saveName(name); showGamemodeScreen();
+  myName = name; saveName(name); showHomeScreen();
 }
 
-// ════ GAMEMODE ════
-function showGamemodeScreen() {
-  document.getElementById('gamemode-player-name').textContent = myName;
-  const av = document.getElementById('gamemode-avatar');
+// ════ HOME ════
+function showHomeScreen() {
+  document.getElementById('home-player-name').textContent = myName;
+  const av = document.getElementById('home-avatar');
   av.textContent = initials(myName); av.style.background = avatarColor(myName);
-  showScreen('screen-gamemode');
+  document.getElementById('room-code-input').value = '';
+  document.getElementById('room-error').classList.add('hidden');
+  showScreen('screen-home');
 }
 
 document.getElementById('btn-change-name').addEventListener('click', () => {
@@ -72,18 +74,7 @@ document.getElementById('btn-change-name').addEventListener('click', () => {
   showScreen('screen-landing');
 });
 
-document.getElementById('mode-outline').addEventListener('click', () => openRoom('outline'));
-document.getElementById('mode-flag').addEventListener('click',    () => openRoom('flag'));
-
-function openRoom(mode) {
-  currentGameMode = mode;
-  document.getElementById('room-mode-label').textContent = mode === 'flag' ? 'Guess the Flag' : 'Outline Guess';
-  document.getElementById('room-code-input').value = '';
-  document.getElementById('room-error').classList.add('hidden');
-  showScreen('screen-room');
-}
-
-// ════ ROOM ════
+// ════ CREATE / JOIN ════
 const $roomCodeInput = document.getElementById('room-code-input');
 const $roomError     = document.getElementById('room-error');
 
@@ -110,6 +101,7 @@ const $playerCount  = document.getElementById('player-count');
 const $hostControls = document.getElementById('lobby-host-controls');
 const $lobbyWaiting = document.getElementById('lobby-waiting');
 const $lobbyError   = document.getElementById('lobby-error');
+const $modeSelector = document.getElementById('lobby-mode-selector');
 
 document.getElementById('btn-copy-code').addEventListener('click', () => {
   navigator.clipboard.writeText(myRoomCode).then(() => {
@@ -119,8 +111,23 @@ document.getElementById('btn-copy-code').addEventListener('click', () => {
 });
 
 document.getElementById('btn-start').addEventListener('click', () => {
-  socket.emit('startGame', { gameMode: currentGameMode });
+  socket.emit('startGame');
 });
+
+// Mode picker clicks (host only)
+document.getElementById('mode-opt-outline').addEventListener('click', () => {
+  if (!isHost) return;
+  socket.emit('changeGameMode', { gameMode: 'outline' });
+});
+document.getElementById('mode-opt-flag').addEventListener('click', () => {
+  if (!isHost) return;
+  socket.emit('changeGameMode', { gameMode: 'flag' });
+});
+
+function updateModePicker(mode) {
+  document.getElementById('mode-opt-outline').classList.toggle('selected', mode === 'outline');
+  document.getElementById('mode-opt-flag').classList.toggle('selected', mode === 'flag');
+}
 
 function renderPlayerList(players) {
   $playerList.innerHTML = '';
@@ -135,6 +142,7 @@ function renderPlayerList(players) {
 
 function setLobbyMode(mode) {
   document.getElementById('lobby-mode-label').textContent = mode === 'flag' ? 'Guess the Flag' : 'Outline Guess';
+  updateModePicker(mode);
   const box = document.getElementById('lobby-rules-box');
   if (mode === 'flag') {
     box.innerHTML = `<h3>Guess the Flag</h3><ul class="rules-list">
@@ -152,6 +160,23 @@ function setLobbyMode(mode) {
       <li>5 rounds total — most points wins!</li>
     </ul>`;
   }
+}
+
+function showLobby(players, gameMode, asHost) {
+  currentGameMode = gameMode || 'outline';
+  renderPlayerList(players);
+  setLobbyMode(currentGameMode);
+  if (asHost) {
+    $hostControls.classList.remove('hidden');
+    $lobbyWaiting.classList.add('hidden');
+    $modeSelector.classList.remove('hidden');
+  } else {
+    $hostControls.classList.add('hidden');
+    $lobbyWaiting.classList.remove('hidden');
+    $modeSelector.classList.add('hidden');
+  }
+  $lobbyError.classList.add('hidden');
+  showScreen('screen-lobby');
 }
 
 // ════ GAME ════
@@ -256,7 +281,6 @@ function submitGuess() {
   const g = $guessInput.value.trim();
   if (!g || !roundActive || hasSubmitted) return;
   socket.emit('submitGuess', { guess: g });
-  // Lock immediately — server confirms with guessSubmitted / guessResult
   hasSubmitted = true;
   setGuessState(true);
   showFeedback('Answer Submitted', 'correct');
@@ -281,26 +305,16 @@ document.getElementById('btn-play-again').addEventListener('click', () => socket
 // ════ SOCKET EVENTS ════
 socket.on('connect', () => { myId = socket.id; });
 
-socket.on('roomCreated', ({ code, players }) => {
+socket.on('roomCreated', ({ code, players, gameMode }) => {
   myRoomCode = code; isHost = true; inRoom = true;
   $displayCode.textContent = code;
-  renderPlayerList(players);
-  $hostControls.classList.remove('hidden');
-  $lobbyWaiting.classList.add('hidden');
-  $lobbyError.classList.add('hidden');
-  setLobbyMode(currentGameMode);
-  showScreen('screen-lobby');
+  showLobby(players, gameMode, true);
 });
 
-socket.on('roomJoined', ({ code, players }) => {
+socket.on('roomJoined', ({ code, players, gameMode }) => {
   myRoomCode = code; isHost = false; inRoom = true;
   $displayCode.textContent = code;
-  renderPlayerList(players);
-  $hostControls.classList.add('hidden');
-  $lobbyWaiting.classList.remove('hidden');
-  $lobbyError.classList.add('hidden');
-  setLobbyMode(currentGameMode);
-  showScreen('screen-lobby');
+  showLobby(players, gameMode, false);
 });
 
 socket.on('joinError', ({ message }) => showRoomError(message));
@@ -311,7 +325,13 @@ socket.on('newHost', ({ hostId }) => {
     isHost = true;
     $hostControls.classList.remove('hidden');
     $lobbyWaiting.classList.add('hidden');
+    $modeSelector.classList.remove('hidden');
   }
+});
+
+socket.on('gameModeChanged', ({ gameMode }) => {
+  currentGameMode = gameMode;
+  setLobbyMode(gameMode);
 });
 
 socket.on('startError', ({ message }) => {
@@ -319,7 +339,6 @@ socket.on('startError', ({ message }) => {
 });
 
 socket.on('roundStart', ({ round, totalRounds, gameMode, countryId, flagAlpha2, timeLimit }) => {
-  // Ignore if we've left the room
   if (!inRoom) return;
 
   currentGameMode = gameMode;
@@ -333,7 +352,6 @@ socket.on('roundStart', ({ round, totalRounds, gameMode, countryId, flagAlpha2, 
   $roundOverlay.classList.add('hidden');
   $overlayResults.innerHTML = '';
 
-  // Header info
   if (gameMode === 'flag') {
     $roundInfoText.textContent = `Flag Mode · Round ${round}`;
     $winTarget.classList.remove('hidden');
@@ -342,7 +360,6 @@ socket.on('roundStart', ({ round, totalRounds, gameMode, countryId, flagAlpha2, 
     $winTarget.classList.add('hidden');
   }
 
-  // Show correct display panel
   if (gameMode === 'flag') {
     $displayOutline.classList.add('hidden');
     $displayFlag.classList.remove('hidden');
@@ -357,7 +374,6 @@ socket.on('roundStart', ({ round, totalRounds, gameMode, countryId, flagAlpha2, 
   showScreen('screen-game');
 });
 
-// Outline mode — immediate correct/wrong feedback
 socket.on('guessResult', ({ correct, points, isFirst, gaveUp, totalScore }) => {
   if (correct) {
     let msg = `Correct! +${points} pts`;
@@ -370,12 +386,8 @@ socket.on('guessResult', ({ correct, points, isFirst, gaveUp, totalScore }) => {
   }
 });
 
-// Flag mode — just confirms submission, no reveal
-socket.on('guessSubmitted', ({ gaveUp } = {}) => {
-  // Already shown "Answer Submitted" or "Skipped" on click; nothing extra needed
-});
+socket.on('guessSubmitted', ({ gaveUp } = {}) => {});
 
-// Outline mode — show who guessed in the sidebar
 socket.on('playerGuessed', ({ playerName, correct, isFirst }) => {
   const li = document.createElement('li');
   li.className = correct ? 'correct' : 'wrong';
@@ -383,10 +395,9 @@ socket.on('playerGuessed', ({ playerName, correct, isFirst }) => {
   $guessedList.appendChild(li);
 });
 
-// Flag mode — someone submitted (no answer shown)
 socket.on('playerSubmitted', ({ playerName }) => {
   const li = document.createElement('li');
-  li.className = 'wrong'; // neutral grey
+  li.className = 'wrong';
   li.textContent = playerName + ' submitted';
   $guessedList.appendChild(li);
 });
@@ -400,7 +411,6 @@ socket.on('roundEnd', ({ correctAnswer, scores, playerResults, round, totalRound
   $overlayCountry.textContent = correctAnswer;
   $overlayResults.innerHTML = '';
 
-  // Build per-player result rows
   if (playerResults && playerResults.length > 0) {
     playerResults.forEach(p => {
       const li = document.createElement('li');
@@ -431,7 +441,7 @@ socket.on('roundEnd', ({ correctAnswer, scores, playerResults, round, totalRound
 
 socket.on('gameEnd', ({ results, winner, isDraw, drawPlayers }) => {
   $roundOverlay.classList.add('hidden');
-  inRoom = false; // game is over
+  inRoom = false;
 
   if (isDraw) {
     $winnerBanner.textContent = `🤝 It's a Draw! ${drawPlayers.join(' & ')} tied with ${results[0].score} pts`;
@@ -457,18 +467,15 @@ socket.on('gameEnd', ({ results, winner, isDraw, drawPlayers }) => {
   showScreen('screen-results');
 });
 
-socket.on('backToLobby', ({ players }) => {
+socket.on('backToLobby', ({ players, gameMode }) => {
   inRoom = true;
-  renderPlayerList(players);
-  setLobbyMode(currentGameMode);
-  if (isHost) { $hostControls.classList.remove('hidden'); $lobbyWaiting.classList.add('hidden'); }
-  else        { $hostControls.classList.add('hidden');    $lobbyWaiting.classList.remove('hidden'); }
-  showScreen('screen-lobby');
+  $displayCode.textContent = myRoomCode;
+  showLobby(players, gameMode, isHost);
 });
 
 // ════ INIT ════
 (function init() {
   const saved = loadName();
-  if (saved) { myName = saved; showGamemodeScreen(); }
+  if (saved) { myName = saved; showHomeScreen(); }
   else showScreen('screen-landing');
 })();
