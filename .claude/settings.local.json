@@ -15,7 +15,18 @@
       "Bash(git init:*)",
       "Bash(git add:*)",
       "Bash(git commit:*)",
-      "Bash(git config:*)"
+      "Bash(git config:*)",
+      "Bash(git remote:*)",
+      "Bash(git branch:*)",
+      "Bash(git push:*)",
+      "Bash(curl -s -X POST https://backboard.railway.app/graphql/v2 -H 'Authorization: Bearer 6f3c9d19-572f-4e0d-bff6-2d4cbc5c667f' -H 'Content-Type: application/json' -d '{\"query\":\"{ project\\(id: \\\\\"b522f751-de40-4b92-9781-4759320caadf\\\\\"\\) { services { edges { node { id name } } } environments { edges { node { id name } } } } }\"}')",
+      "Bash(powershell -Command ':*)",
+      "Read(//c/Users/olegu/Desktop/**)",
+      "Bash(powershell -Command \"Compress-Archive -Path 'Claude\\\\*' -DestinationPath 'GeoManiac.zip' -Force\")",
+      "Bash(powershell -Command \"Invoke-WebRequest -Uri 'https://geomaniac-production.up.railway.app/app.js' -UseBasicParsing | Select-Object -ExpandProperty Content\")",
+      "Bash(powershell -Command \"Start-Sleep -Seconds 90; Invoke-WebRequest -Uri 'https://geomaniac-production.up.railway.app/app.js' -UseBasicParsing | Select-Object -ExpandProperty Content\")",
+      "Bash(powershell -Command \"Start-Sleep -Seconds 100; Invoke-WebRequest -Uri 'https://geomaniac-production.up.railway.app/app.js' -UseBasicParsing | Select-Object -ExpandProperty Content\")",
+      "Bash(git fetch:*)"
     ]
   }
 }

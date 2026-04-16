@@ -10,31 +10,32 @@ const io = new Server(server);
 
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Game constants
-const ROUNDS_PER_GAME = 5;
+// ── Constants ──
+const ROUNDS_PER_GAME    = 5;
 const ROUND_TIME_SECONDS = 30;
-const CORRECT_POINTS = 5;
-const FIRST_BONUS = 2;
+const CORRECT_POINTS     = 5;
+const FIRST_BONUS        = 2;
+const FLAG_WIN_SCORE     = 25;
+const FLAG_WRONG_PENALTY = 2;
 
-// Load countries list (deduplicated by id)
-const rawCountries = JSON.parse(fs.readFileSync(path.join(__dirname, 'public', 'countries.json'), 'utf8'));
-const seenIds = new Set();
-const COUNTRIES = rawCountries.filter(c => {
-  if (seenIds.has(c.id)) return false;
-  seenIds.add(c.id);
-  return true;
-});
+// ── Country data ──
+const ALL_COUNTRIES = JSON.parse(
+  fs.readFileSync(path.join(__dirname, 'public', 'countries.json'), 'utf8')
+);
+const OUTLINE_COUNTRIES = ALL_COUNTRIES.filter(c => c.id);
+const FLAG_COUNTRIES    = ALL_COUNTRIES.filter(c => c.alpha2);
 
 const rooms = new Map();
 
+// ── Helpers ──
 function generateRoomCode() {
   return Math.random().toString(36).substring(2, 8).toUpperCase();
 }
 
-function getRandomCountry(usedIds) {
-  const available = COUNTRIES.filter(c => !usedIds.includes(c.id));
-  const pool = available.length > 0 ? available : COUNTRIES;
-  return pool[Math.floor(Math.random() * pool.length)];
+function getRandomCountry(pool, usedIds) {
+  const available = pool.filter(c => !usedIds.includes(c.id || c.alpha2));
+  const source = available.length > 0 ? available : pool;
+  return source[Math.floor(Math.random() * source.length)];
 }
 
 function normalizeGuess(str) {
@@ -47,6 +48,7 @@ function isGuessCorrect(guess, country) {
   return (country.aliases || []).some(a => normalizeGuess(a) === g);
 }
 
+// ── Round management ──
 function startRound(roomCode) {
   const room = rooms.get(roomCode);
   if (!room) return;
@@ -56,17 +58,22 @@ function startRound(roomCode) {
   room.roundGuesses = {};
   room.firstCorrect = null;
 
-  const country = getRandomCountry(room.usedCountryIds);
+  const pool = room.gameMode === 'flag' ? FLAG_COUNTRIES : OUTLINE_COUNTRIES;
+  const country = getRandomCountry(pool, room.usedCountryKeys);
   room.currentCountry = country;
-  room.usedCountryIds.push(country.id);
+  room.usedCountryKeys.push(country.id || country.alpha2);
 
-  io.to(roomCode).emit('roundStart', {
+  const payload = {
     round: room.currentRound,
-    totalRounds: ROUNDS_PER_GAME,
-    countryId: country.id,
+    totalRounds: room.gameMode === 'outline' ? ROUNDS_PER_GAME : null,
+    gameMode: room.gameMode,
     timeLimit: ROUND_TIME_SECONDS,
-  });
+    winScore: room.gameMode === 'flag' ? FLAG_WIN_SCORE : null,
+  };
+  if (room.gameMode === 'outline') payload.countryId = country.id;
+  if (room.gameMode === 'flag')    payload.flagAlpha2 = country.alpha2;
 
+  io.to(roomCode).emit('roundStart', payload);
   room.roundTimer = setTimeout(() => endRound(roomCode), ROUND_TIME_SECONDS * 1000);
 }
 
@@ -82,10 +89,12 @@ function endRound(roomCode) {
     correctAnswer: room.currentCountry.name,
     scores: room.players.map(p => ({ id: p.id, name: p.name, score: p.score })),
     round: room.currentRound,
-    totalRounds: ROUNDS_PER_GAME,
+    totalRounds: room.gameMode === 'outline' ? ROUNDS_PER_GAME : null,
+    gameMode: room.gameMode,
   });
 
-  if (room.currentRound >= ROUNDS_PER_GAME) {
+  const shouldEnd = room.gameMode === 'outline' && room.currentRound >= ROUNDS_PER_GAME;
+  if (shouldEnd) {
     setTimeout(() => endGame(roomCode), 4000);
   } else {
     setTimeout(() => startRound(roomCode), 4000);
@@ -110,6 +119,7 @@ function endGame(roomCode) {
   });
 }
 
+// ── Socket handlers ──
 io.on('connection', (socket) => {
   console.log('Connected:', socket.id);
 
@@ -121,59 +131,39 @@ io.on('connection', (socket) => {
       host: socket.id,
       players: [{ id: socket.id, name: name.trim(), score: 0 }],
       gameState: 'lobby',
+      gameMode: 'outline',
       currentRound: 0,
       currentCountry: null,
       roundGuesses: {},
       firstCorrect: null,
       roundTimer: null,
-      usedCountryIds: [],
+      usedCountryKeys: [],
     };
     rooms.set(code, room);
     socket.join(code);
-    socket.emit('roomCreated', {
-      code,
-      players: room.players,
-      isHost: true,
-    });
+    socket.emit('roomCreated', { code, players: room.players, isHost: true });
   });
 
   socket.on('joinRoom', ({ code, name }) => {
     if (!name || !name.trim()) return;
     const room = rooms.get((code || '').toUpperCase().trim());
-    if (!room) {
-      socket.emit('joinError', { message: 'Room not found. Check the code and try again.' });
-      return;
-    }
-    if (room.gameState !== 'lobby') {
-      socket.emit('joinError', { message: 'Game already in progress.' });
-      return;
-    }
-    if (room.players.length >= 8) {
-      socket.emit('joinError', { message: 'Room is full (max 8 players).' });
-      return;
-    }
+    if (!room) { socket.emit('joinError', { message: 'Room not found.' }); return; }
+    if (room.gameState !== 'lobby') { socket.emit('joinError', { message: 'Game already in progress.' }); return; }
+    if (room.players.length >= 8) { socket.emit('joinError', { message: 'Room is full (max 8).' }); return; }
 
     room.players.push({ id: socket.id, name: name.trim(), score: 0 });
     socket.join(room.code);
-    socket.emit('roomJoined', {
-      code: room.code,
-      players: room.players,
-      isHost: false,
-    });
+    socket.emit('roomJoined', { code: room.code, players: room.players, isHost: false });
     socket.to(room.code).emit('lobbyUpdate', { players: room.players });
   });
 
-  socket.on('startGame', () => {
+  socket.on('startGame', ({ gameMode }) => {
     for (const [code, room] of rooms) {
       if (room.host === socket.id && room.gameState === 'lobby') {
-        if (room.players.length < 1) {
-          socket.emit('startError', { message: 'Need at least 1 player.' });
-          return;
-        }
-        // Reset scores
         room.players.forEach(p => { p.score = 0; });
         room.currentRound = 0;
-        room.usedCountryIds = [];
+        room.usedCountryKeys = [];
+        room.gameMode = gameMode || 'outline';
         startRound(code);
         return;
       }
@@ -187,32 +177,48 @@ io.on('connection', (socket) => {
       const player = room.players.find(p => p.id === socket.id);
       if (!player) continue;
       if (room.gameState !== 'playing') return;
-      if (room.roundGuesses[socket.id] !== undefined) return; // already guessed
+
+      const alreadyCorrect = room.roundGuesses[socket.id] === true;
+      if (alreadyCorrect) return;
+
+      // Outline mode: one guess total
+      if (room.gameMode === 'outline' && room.roundGuesses[socket.id] !== undefined) return;
 
       const correct = isGuessCorrect(guess, room.currentCountry);
-      room.roundGuesses[socket.id] = correct;
 
       if (correct) {
+        room.roundGuesses[socket.id] = true;
         let points = CORRECT_POINTS;
         const isFirst = room.firstCorrect === null;
-        if (isFirst) {
-          room.firstCorrect = socket.id;
-          points += FIRST_BONUS;
-        }
+        if (isFirst) { room.firstCorrect = socket.id; points += FIRST_BONUS; }
         player.score += points;
 
         socket.emit('guessResult', { correct: true, points, isFirst, totalScore: player.score });
-        socket.to(code).emit('playerGuessed', {
-          playerName: player.name,
-          correct: true,
-          isFirst,
-        });
+        socket.to(code).emit('playerGuessed', { playerName: player.name, correct: true, isFirst });
 
-        // End round if all players have guessed
-        const allDone = room.players.every(p => room.roundGuesses[p.id] !== undefined);
-        if (allDone) endRound(code);
+        // Flag mode: check win condition immediately
+        if (room.gameMode === 'flag' && player.score >= FLAG_WIN_SCORE) {
+          clearTimeout(room.roundTimer);
+          room.roundTimer = null;
+          endGame(code);
+          return;
+        }
+
+        // End round if everyone answered correctly
+        const allCorrect = room.players.every(p => room.roundGuesses[p.id] === true);
+        if (allCorrect) endRound(code);
+
       } else {
-        socket.emit('guessResult', { correct: false, totalScore: player.score });
+        if (room.gameMode === 'flag') {
+          // Wrong in flag mode: -2 penalty, keep guessing allowed
+          room.roundGuesses[socket.id] = false;
+          player.score -= FLAG_WRONG_PENALTY;
+          socket.emit('guessResult', { correct: false, penalty: FLAG_WRONG_PENALTY, totalScore: player.score });
+        } else {
+          // Wrong in outline mode: locked out for round
+          room.roundGuesses[socket.id] = false;
+          socket.emit('guessResult', { correct: false, totalScore: player.score });
+        }
       }
       return;
     }
@@ -223,14 +229,16 @@ io.on('connection', (socket) => {
       const player = room.players.find(p => p.id === socket.id);
       if (!player) continue;
       if (room.gameState !== 'playing') return;
-      if (room.roundGuesses[socket.id] !== undefined) return;
+      if (room.roundGuesses[socket.id] === true) return;
 
       room.roundGuesses[socket.id] = false;
       socket.emit('guessResult', { correct: false, gaveUp: true, totalScore: player.score });
       socket.to(code).emit('playerGuessed', { playerName: player.name, correct: false });
 
-      const allDone = room.players.every(p => room.roundGuesses[p.id] !== undefined);
-      if (allDone) endRound(code);
+      if (room.gameMode === 'outline') {
+        const allDone = room.players.every(p => room.roundGuesses[p.id] !== undefined);
+        if (allDone) endRound(code);
+      }
       return;
     }
   });
@@ -240,7 +248,7 @@ io.on('connection', (socket) => {
       if (room.host === socket.id && room.gameState === 'gameEnd') {
         room.players.forEach(p => { p.score = 0; });
         room.currentRound = 0;
-        room.usedCountryIds = [];
+        room.usedCountryKeys = [];
         room.gameState = 'lobby';
         io.to(code).emit('backToLobby', { players: room.players });
         return;
@@ -254,7 +262,6 @@ io.on('connection', (socket) => {
       if (idx === -1) continue;
 
       room.players.splice(idx, 1);
-
       if (room.players.length === 0) {
         if (room.roundTimer) clearTimeout(room.roundTimer);
         rooms.delete(code);
@@ -265,10 +272,11 @@ io.on('connection', (socket) => {
         }
         io.to(code).emit('lobbyUpdate', { players: room.players });
 
-        // If all remaining players have guessed, end the round
         if (room.gameState === 'playing') {
-          const allDone = room.players.every(p => room.roundGuesses[p.id] !== undefined);
-          if (allDone) endRound(code);
+          const allDone = room.gameMode === 'outline'
+            ? room.players.every(p => room.roundGuesses[p.id] !== undefined)
+            : room.players.every(p => room.roundGuesses[p.id] === true);
+          if (allDone && room.players.length > 0) endRound(code);
         }
       }
       break;
@@ -277,6 +285,4 @@ io.on('connection', (socket) => {
 });
 
 const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => {
-  console.log(`GeoManiac running at http://localhost:${PORT}`);
-});
+server.listen(PORT, () => console.log(`GeoManiac running at http://localhost:${PORT}`));

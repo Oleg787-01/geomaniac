@@ -8,13 +8,11 @@
 </head>
 <body>
 
-  <!-- LANDING SCREEN (name entry — only shown first visit) -->
+  <!-- LANDING -->
   <div id="screen-landing" class="screen active">
     <div class="landing-bg"></div>
     <div class="landing-content">
-      <div class="logo">
-        <span class="logo-geo">Geo</span><span class="logo-maniac">Maniac</span>
-      </div>
+      <div class="logo"><span class="logo-geo">Geo</span><span class="logo-maniac">Maniac</span></div>
       <p class="tagline">Master world geography. Challenge your friends.</p>
       <div class="card">
         <label for="player-name">What's your name?</label>
@@ -25,12 +23,10 @@
     </div>
   </div>
 
-  <!-- GAMEMODE SCREEN -->
+  <!-- GAMEMODE -->
   <div id="screen-gamemode" class="screen">
     <div class="top-bar">
-      <div class="logo small logo-clickable" id="logo-gamemode">
-        <span class="logo-geo">Geo</span><span class="logo-maniac">Maniac</span>
-      </div>
+      <div class="logo small logo-clickable" id="logo-gamemode"><span class="logo-geo">Geo</span><span class="logo-maniac">Maniac</span></div>
       <div class="player-chip">
         <span class="player-chip-av" id="gamemode-avatar"></span>
         <span id="gamemode-player-name"></span>
@@ -44,28 +40,36 @@
         <div class="mode-card" id="mode-outline">
           <div class="mode-icon">🗺️</div>
           <h3>Outline Guess</h3>
-          <p>Identify countries from their black silhouette. 5 rounds, first correct answer gets a bonus!</p>
+          <p>Identify countries from their black silhouette. 5 rounds, one guess per round — first correct answer gets a bonus!</p>
+          <div class="mode-rules">
+            <span class="rule-chip correct-chip">✓ First: +7 pts</span>
+            <span class="rule-chip correct-chip">✓ Correct: +5 pts</span>
+            <span class="rule-chip neutral-chip">5 rounds</span>
+          </div>
           <button class="btn btn-primary mode-btn">Play</button>
         </div>
 
-        <div class="mode-card mode-card-soon" id="mode-flag">
-          <div class="mode-soon-badge">Coming Soon</div>
+        <div class="mode-card" id="mode-flag">
           <div class="mode-icon">🏴</div>
           <h3>Guess the Flag</h3>
-          <p>Identify countries from their national flag. Test your vexillology knowledge!</p>
-          <button class="btn btn-secondary mode-btn" disabled>Coming Soon</button>
+          <p>Identify countries from their national flag. Multiple guesses allowed — but wrong answers cost you points!</p>
+          <div class="mode-rules">
+            <span class="rule-chip correct-chip">✓ First: +7 pts</span>
+            <span class="rule-chip correct-chip">✓ Correct: +5 pts</span>
+            <span class="rule-chip wrong-chip">✗ Wrong: −2 pts</span>
+            <span class="rule-chip neutral-chip">First to 25 wins</span>
+          </div>
+          <button class="btn btn-primary mode-btn">Play</button>
         </div>
 
       </div>
     </div>
   </div>
 
-  <!-- ROOM SCREEN (create / join) -->
+  <!-- ROOM -->
   <div id="screen-room" class="screen">
     <div class="top-bar">
-      <div class="logo small logo-clickable" id="logo-room">
-        <span class="logo-geo">Geo</span><span class="logo-maniac">Maniac</span>
-      </div>
+      <div class="logo small logo-clickable" id="logo-room"><span class="logo-geo">Geo</span><span class="logo-maniac">Maniac</span></div>
       <span class="top-bar-mode-label" id="room-mode-label">Outline Guess</span>
     </div>
     <div class="room-content">
@@ -82,12 +86,11 @@
     </div>
   </div>
 
-  <!-- LOBBY SCREEN -->
+  <!-- LOBBY -->
   <div id="screen-lobby" class="screen">
     <div class="top-bar">
-      <div class="logo small logo-clickable" id="logo-lobby">
-        <span class="logo-geo">Geo</span><span class="logo-maniac">Maniac</span>
-      </div>
+      <div class="logo small logo-clickable" id="logo-lobby"><span class="logo-geo">Geo</span><span class="logo-maniac">Maniac</span></div>
+      <span class="top-bar-mode-label" id="lobby-mode-label"></span>
     </div>
     <div class="lobby-content">
       <div class="room-code-display">
@@ -99,36 +102,23 @@
         <h2>Players <span id="player-count">(0/8)</span></h2>
         <ul id="player-list" class="player-list"></ul>
         <div id="lobby-host-controls" class="hidden">
-          <p class="host-tip">You are the host. Invite friends with the room code above.</p>
+          <p class="host-tip">You are the host. Share the room code above.</p>
           <button id="btn-start" class="btn btn-primary btn-large">Start Game</button>
         </div>
         <div id="lobby-waiting" class="hidden">
-          <p class="waiting-msg">Waiting for the host to start the game...</p>
+          <p class="waiting-msg">Waiting for the host to start...</p>
         </div>
         <p id="lobby-error" class="error-msg hidden"></p>
       </div>
-      <div class="game-info-box">
-        <h3>Outline Guess</h3>
-        <ul class="rules-list">
-          <li>A country silhouette is shown each round</li>
-          <li>Type the country name — one guess per round</li>
-          <li>First correct answer: <strong>7 pts</strong> (5 + 2 bonus)</li>
-          <li>Other correct answers: <strong>5 pts</strong></li>
-          <li>5 rounds total &mdash; most points wins!</li>
-        </ul>
-      </div>
+      <div class="game-info-box" id="lobby-rules-box"></div>
     </div>
   </div>
 
-  <!-- GAME SCREEN -->
+  <!-- GAME -->
   <div id="screen-game" class="screen">
     <div class="game-header">
-      <div class="logo small logo-clickable" id="logo-game">
-        <span class="logo-geo">Geo</span><span class="logo-maniac">Maniac</span>
-      </div>
-      <div class="round-info">
-        Round <span id="current-round">1</span> / <span id="total-rounds">5</span>
-      </div>
+      <div class="logo small logo-clickable" id="logo-game"><span class="logo-geo">Geo</span><span class="logo-maniac">Maniac</span></div>
+      <div class="round-info" id="round-info-text">Round 1 / 5</div>
       <div class="timer-wrap">
         <div id="timer-bar-fill" class="timer-bar-fill"></div>
         <span id="timer-text" class="timer-text">30</span>
@@ -136,16 +126,22 @@
     </div>
 
     <div class="game-body">
-      <div class="country-display">
+      <!-- Outline display -->
+      <div id="display-outline" class="country-display">
         <div id="country-svg-wrap">
           <svg id="country-svg" viewBox="0 0 500 400" preserveAspectRatio="xMidYMid meet"></svg>
           <div id="svg-loading" class="svg-loading">Loading map data...</div>
         </div>
       </div>
 
+      <!-- Flag display -->
+      <div id="display-flag" class="country-display hidden">
+        <img id="flag-img" class="flag-img" src="" alt="Flag to identify" />
+      </div>
+
       <div class="game-sidebar">
-        <div class="guess-area" id="guess-area">
-          <h3>What country is this?</h3>
+        <div class="guess-area">
+          <h3 id="guess-prompt">What country is this?</h3>
           <input id="guess-input" type="text" placeholder="Type country name..." maxlength="60" autocomplete="off" />
           <div class="guess-btn-row">
             <button id="btn-submit-guess" class="btn btn-primary">Submit</button>
@@ -155,34 +151,34 @@
         </div>
 
         <div class="score-panel">
-          <h3>Scores</h3>
+          <div class="score-header">
+            <h3>Scores</h3>
+            <span id="win-target" class="win-target hidden">First to 25 pts</span>
+          </div>
           <ul id="score-list" class="score-list"></ul>
         </div>
 
-        <div id="guessed-list-wrap" class="guessed-wrap">
-          <h4>Guessed</h4>
+        <div class="guessed-wrap">
+          <h4>This round</h4>
           <ul id="guessed-list" class="guessed-list"></ul>
         </div>
       </div>
     </div>
 
-    <!-- Round end overlay -->
     <div id="round-overlay" class="round-overlay hidden">
       <div class="overlay-card">
         <div class="overlay-label">The country was</div>
         <div id="overlay-country-name" class="overlay-country"></div>
         <div id="overlay-points" class="overlay-points"></div>
-        <div class="overlay-next" id="overlay-next-text">Next round starting...</div>
+        <div id="overlay-next-text" class="overlay-next">Next round starting...</div>
       </div>
     </div>
   </div>
 
-  <!-- GAME END SCREEN -->
+  <!-- RESULTS -->
   <div id="screen-results" class="screen">
     <div class="results-wrap">
-      <div class="logo logo-clickable" id="logo-results">
-        <span class="logo-geo">Geo</span><span class="logo-maniac">Maniac</span>
-      </div>
+      <div class="logo logo-clickable" id="logo-results"><span class="logo-geo">Geo</span><span class="logo-maniac">Maniac</span></div>
       <h2 class="results-title">Game Over!</h2>
       <div id="winner-banner" class="winner-banner"></div>
       <ol id="results-list" class="results-list"></ol>
