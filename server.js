@@ -14,12 +14,15 @@ const ROUNDS_PER_GAME    = 5;
 const ROUND_TIME_SECONDS = 30;
 const CORRECT_POINTS     = 5;
 const FIRST_BONUS        = 2;
-const FLAG_WIN_SCORE     = 25;
-const FLAG_WRONG_PENALTY = 2;
+const FLAG_WIN_SCORE      = 25;
+const FLAG_WRONG_PENALTY  = 2;
+const LANG_WIN_SCORE      = 25;
+const LANG_WRONG_PENALTY  = 2;
 
-const ALL_COUNTRIES     = JSON.parse(fs.readFileSync(path.join(__dirname, 'public', 'countries.json'), 'utf8'));
-const OUTLINE_COUNTRIES = ALL_COUNTRIES.filter(c => c.id);
-const FLAG_COUNTRIES    = ALL_COUNTRIES.filter(c => c.alpha2);
+const ALL_COUNTRIES       = JSON.parse(fs.readFileSync(path.join(__dirname, 'public', 'countries.json'), 'utf8'));
+const OUTLINE_COUNTRIES   = ALL_COUNTRIES.filter(c => c.id);
+const FLAG_COUNTRIES      = ALL_COUNTRIES.filter(c => c.alpha2);
+const LANGUAGE_COUNTRIES  = JSON.parse(fs.readFileSync(path.join(__dirname, 'public', 'languages.json'), 'utf8'));
 
 const rooms = new Map();
 
@@ -85,20 +88,35 @@ function startRound(roomCode) {
   room.flagGuesses  = {};   // flag: playerId -> { guess, correct, submittedAt }
   room.firstCorrect = null;
 
-  const pool    = room.gameMode === 'flag' ? FLAG_COUNTRIES : OUTLINE_COUNTRIES;
-  const country = getRandomCountry(pool, room.usedCountryKeys);
-  room.currentCountry = country;
-  room.usedCountryKeys.push(country.id || country.alpha2);
-
   const payload = {
     round: room.currentRound,
     totalRounds: room.gameMode === 'outline' ? ROUNDS_PER_GAME : null,
     gameMode: room.gameMode,
     timeLimit: ROUND_TIME_SECONDS,
-    winScore: room.gameMode === 'flag' ? FLAG_WIN_SCORE : null,
+    winScore: room.gameMode === 'flag' ? FLAG_WIN_SCORE : room.gameMode === 'language' ? LANG_WIN_SCORE : null,
   };
-  if (room.gameMode === 'outline') payload.countryId  = country.id;
-  if (room.gameMode === 'flag')    payload.flagAlpha2 = country.alpha2;
+
+  if (room.gameMode === 'language') {
+    const available = LANGUAGE_COUNTRIES.filter(l => !room.usedCountryKeys.includes(l.name));
+    const pool = available.length > 0 ? available : LANGUAGE_COUNTRIES;
+    const lang = pool[Math.floor(Math.random() * pool.length)];
+    room.currentCountry = lang;
+    room.usedCountryKeys.push(lang.name);
+    const sentence = lang.sentences[Math.floor(Math.random() * lang.sentences.length)];
+    room.currentSentence = sentence;
+    room.roundStartTime = Date.now();
+    payload.sentenceText = sentence;
+    payload.langBcp47    = lang.bcp47;
+    payload.gender       = Math.random() < 0.5 ? 'male' : 'female';
+  } else {
+    const pool    = room.gameMode === 'flag' ? FLAG_COUNTRIES : OUTLINE_COUNTRIES;
+    const country = getRandomCountry(pool, room.usedCountryKeys);
+    room.currentCountry = country;
+    room.usedCountryKeys.push(country.id || country.alpha2);
+    room.roundStartTime = Date.now();
+    if (room.gameMode === 'outline') payload.countryId  = country.id;
+    if (room.gameMode === 'flag')    payload.flagAlpha2 = country.alpha2;
+  }
 
   io.to(roomCode).emit('roundStart', payload);
   room.roundTimer = setTimeout(() => endRound(roomCode), ROUND_TIME_SECONDS * 1000);
@@ -115,39 +133,46 @@ function endRound(roomCode) {
   let playerResults = [];
   let flagHasWinner = false;
 
-  if (room.gameMode === 'flag') {
-    // Determine first correct submitter
+  if (room.gameMode === 'flag' || room.gameMode === 'language') {
     const correctSubs = Object.entries(room.flagGuesses)
       .filter(([, g]) => g.correct)
       .sort((a, b) => a[1].submittedAt - b[1].submittedAt);
     const firstCorrectId = correctSubs.length > 0 ? correctSubs[0][0] : null;
 
-    // Apply points to every player
     room.players.forEach(p => {
       const g = room.flagGuesses[p.id];
       let points = 0;
       let isFirst = false;
 
       if (g && g.correct) {
-        points  = CORRECT_POINTS + (p.id === firstCorrectId ? FIRST_BONUS : 0);
         isFirst = p.id === firstCorrectId;
-      } else if (g && !g.correct) {
-        points = -FLAG_WRONG_PENALTY;
+        if (room.gameMode === 'language') {
+          const elapsed = (g.submittedAt - room.roundStartTime) / 1000;
+          const base = elapsed <= 10 ? 5 : elapsed <= 20 ? 3 : 2;
+          points = base + (isFirst ? FIRST_BONUS : 0);
+        } else {
+          points = CORRECT_POINTS + (isFirst ? FIRST_BONUS : 0);
+        }
+      } else if (g && !g.correct && !g.gaveUp) {
+        points = room.gameMode === 'language' ? -LANG_WRONG_PENALTY : -FLAG_WRONG_PENALTY;
       }
-      // No guess → 0 points
 
       p.score += points;
       playerResults.push({
         id: p.id, name: p.name,
         correct: !!(g && g.correct),
         submitted: !!g,
+        gaveUp: !!(g && g.gaveUp),
         points,
         isFirst,
         totalScore: p.score,
+        elapsed: g ? Math.round((g.submittedAt - room.roundStartTime) / 1000) : null,
       });
     });
 
-    flagHasWinner = room.players.some(p => p.score >= FLAG_WIN_SCORE);
+    flagHasWinner =
+      (room.gameMode === 'flag'     && room.players.some(p => p.score >= FLAG_WIN_SCORE)) ||
+      (room.gameMode === 'language' && room.players.some(p => p.score >= LANG_WIN_SCORE));
   } else {
     // Outline: points were already applied in submitGuess; build results list
     room.players.forEach(p => {
@@ -172,8 +197,8 @@ function endRound(roomCode) {
   });
 
   const shouldEnd =
-    (room.gameMode === 'outline' && room.currentRound >= ROUNDS_PER_GAME) ||
-    (room.gameMode === 'flag'    && flagHasWinner);
+    (room.gameMode === 'outline'  && room.currentRound >= ROUNDS_PER_GAME) ||
+    ((room.gameMode === 'flag' || room.gameMode === 'language') && flagHasWinner);
 
   setTimeout(() => shouldEnd ? endGame(roomCode) : startRound(roomCode), 4000);
 }
@@ -210,6 +235,8 @@ io.on('connection', (socket) => {
       gameMode: 'outline',
       currentRound: 0,
       currentCountry: null,
+      currentSentence: null,
+      roundStartTime: null,
       roundGuesses: {},
       flagGuesses: {},
       firstCorrect: null,
@@ -240,7 +267,7 @@ io.on('connection', (socket) => {
   });
 
   socket.on('changeGameMode', ({ gameMode }) => {
-    if (gameMode !== 'outline' && gameMode !== 'flag') return;
+    if (!['outline', 'flag', 'language'].includes(gameMode)) return;
     for (const [code, room] of rooms) {
       if (room.host === socket.id && room.gameState === 'lobby') {
         room.gameMode = gameMode;

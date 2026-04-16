@@ -123,10 +123,15 @@ document.getElementById('mode-opt-flag').addEventListener('click', () => {
   if (!isHost) return;
   socket.emit('changeGameMode', { gameMode: 'flag' });
 });
+document.getElementById('mode-opt-language').addEventListener('click', () => {
+  if (!isHost) return;
+  socket.emit('changeGameMode', { gameMode: 'language' });
+});
 
 function updateModePicker(mode) {
   document.getElementById('mode-opt-outline').classList.toggle('selected', mode === 'outline');
   document.getElementById('mode-opt-flag').classList.toggle('selected', mode === 'flag');
+  document.getElementById('mode-opt-language').classList.toggle('selected', mode === 'language');
 }
 
 function renderPlayerList(players) {
@@ -141,7 +146,8 @@ function renderPlayerList(players) {
 }
 
 function setLobbyMode(mode) {
-  document.getElementById('lobby-mode-label').textContent = mode === 'flag' ? 'Guess the Flag' : 'Outline Guess';
+  const labels = { outline: 'Outline Guess', flag: 'Guess the Flag', language: 'Guess the Language' };
+  document.getElementById('lobby-mode-label').textContent = labels[mode] || mode;
   updateModePicker(mode);
   const box = document.getElementById('lobby-rules-box');
   if (mode === 'flag') {
@@ -150,6 +156,15 @@ function setLobbyMode(mode) {
       <li>After 30 seconds the answer is revealed for everyone</li>
       <li>First correct (by submission time): <strong>+7 pts</strong></li>
       <li>Other correct answers: <strong>+5 pts</strong></li>
+      <li>Wrong guess: <strong>−2 pts</strong> &nbsp;·&nbsp; No answer: <strong>0 pts</strong></li>
+      <li>First player to reach <strong>25 points wins!</strong></li>
+    </ul>`;
+  } else if (mode === 'language') {
+    box.innerHTML = `<h3>Guess the Language</h3><ul class="rules-list">
+      <li>A sentence is spoken aloud — guess which language it is!</li>
+      <li>Answer within <strong>10 seconds</strong>: +5 pts (or +7 if first)</li>
+      <li>Answer within <strong>10–20 seconds</strong>: +3 pts (or +5 if first)</li>
+      <li>Answer in <strong>last 10 seconds</strong>: +2 pts (or +4 if first)</li>
       <li>Wrong guess: <strong>−2 pts</strong> &nbsp;·&nbsp; No answer: <strong>0 pts</strong></li>
       <li>First player to reach <strong>25 points wins!</strong></li>
     </ul>`;
@@ -197,8 +212,39 @@ const $svgEl          = document.getElementById('country-svg');
 const $svgLoading     = document.getElementById('svg-loading');
 const $flagImg        = document.getElementById('flag-img');
 const $winTarget      = document.getElementById('win-target');
-const $displayOutline = document.getElementById('display-outline');
-const $displayFlag    = document.getElementById('display-flag');
+const $displayOutline   = document.getElementById('display-outline');
+const $displayFlag      = document.getElementById('display-flag');
+const $displayLanguage  = document.getElementById('display-language');
+
+let currentSentenceText = '';
+let currentLangBcp47    = '';
+let currentGender       = 'male';
+
+function getVoices() {
+  return new Promise(resolve => {
+    const v = window.speechSynthesis.getVoices();
+    if (v.length > 0) { resolve(v); return; }
+    window.speechSynthesis.onvoiceschanged = () => resolve(window.speechSynthesis.getVoices());
+  });
+}
+
+async function speakLanguage(text, bcp47, gender) {
+  window.speechSynthesis.cancel();
+  const utterance = new SpeechSynthesisUtterance(text);
+  utterance.lang = bcp47;
+  utterance.rate = 0.88;
+  utterance.pitch = gender === 'female' ? 1.15 : 0.82;
+  utterance.volume = 1;
+  const voices = await getVoices();
+  const prefix = bcp47.split('-')[0];
+  const matching = voices.filter(v => v.lang.startsWith(prefix));
+  if (matching.length > 0) utterance.voice = matching[Math.floor(Math.random() * matching.length)];
+  window.speechSynthesis.speak(utterance);
+}
+
+document.getElementById('btn-replay-audio').addEventListener('click', () => {
+  speakLanguage(currentSentenceText, currentLangBcp47, currentGender);
+});
 
 // Load map data once
 Promise.all([
@@ -338,7 +384,7 @@ socket.on('startError', ({ message }) => {
   $lobbyError.textContent = message; $lobbyError.classList.remove('hidden');
 });
 
-socket.on('roundStart', ({ round, totalRounds, gameMode, countryId, flagAlpha2, timeLimit }) => {
+socket.on('roundStart', ({ round, totalRounds, gameMode, countryId, flagAlpha2, sentenceText, langBcp47, gender, timeLimit }) => {
   if (!inRoom) return;
 
   currentGameMode = gameMode;
@@ -355,19 +401,33 @@ socket.on('roundStart', ({ round, totalRounds, gameMode, countryId, flagAlpha2, 
   if (gameMode === 'flag') {
     $roundInfoText.textContent = `Flag Mode · Round ${round}`;
     $winTarget.classList.remove('hidden');
+  } else if (gameMode === 'language') {
+    $roundInfoText.textContent = `Language Mode · Round ${round}`;
+    $winTarget.classList.remove('hidden');
   } else {
     $roundInfoText.textContent = `Round ${round} / ${totalRounds}`;
     $winTarget.classList.add('hidden');
   }
 
+  $displayOutline.classList.add('hidden');
+  $displayFlag.classList.add('hidden');
+  $displayLanguage.classList.add('hidden');
+
   if (gameMode === 'flag') {
-    $displayOutline.classList.add('hidden');
     $displayFlag.classList.remove('hidden');
     showFlag(flagAlpha2);
+    document.getElementById('guess-prompt').textContent = 'What country is this?';
+  } else if (gameMode === 'language') {
+    $displayLanguage.classList.remove('hidden');
+    currentSentenceText = sentenceText;
+    currentLangBcp47    = langBcp47;
+    currentGender       = gender;
+    document.getElementById('guess-prompt').textContent = 'What language is this?';
+    setTimeout(() => speakLanguage(sentenceText, langBcp47, gender), 400);
   } else {
-    $displayFlag.classList.add('hidden');
     $displayOutline.classList.remove('hidden');
     renderCountry(countryId);
+    document.getElementById('guess-prompt').textContent = 'What country is this?';
   }
 
   startTimer(timeLimit);
@@ -406,10 +466,13 @@ socket.on('roundEnd', ({ correctAnswer, scores, playerResults, round, totalRound
   roundActive = false;
   clearInterval(timerInterval);
   setGuessState(true);
+  window.speechSynthesis && window.speechSynthesis.cancel();
 
   renderScores(scores);
   $overlayCountry.textContent = correctAnswer;
   $overlayResults.innerHTML = '';
+  document.getElementById('overlay-label').textContent =
+    gameMode === 'language' ? 'The language was' : 'The country was';
 
   if (playerResults && playerResults.length > 0) {
     playerResults.forEach(p => {
@@ -418,13 +481,19 @@ socket.on('roundEnd', ({ correctAnswer, scores, playerResults, round, totalRound
 
       if (p.correct) {
         li.className = 'res-correct';
-        const ptsText = gameMode === 'flag'
-          ? `+${p.points} pts${p.isFirst ? ' · First!' : ''}`
-          : (p.isFirst ? '+7 pts · First!' : '+5 pts');
+        let ptsText;
+        if (gameMode === 'flag') {
+          ptsText = `+${p.points} pts${p.isFirst ? ' · First!' : ''}`;
+        } else if (gameMode === 'language') {
+          const timeStr = p.elapsed !== null ? ` · ${p.elapsed}s` : '';
+          ptsText = `+${p.points} pts${p.isFirst ? ' · First!' : ''}${timeStr}`;
+        } else {
+          ptsText = p.isFirst ? '+7 pts · First!' : '+5 pts';
+        }
         li.innerHTML = `<span class="res-icon">✓</span><span class="res-name">${p.name}${myResult ? ' (you)' : ''}</span><span class="res-pts pos">${ptsText}</span>`;
       } else if (p.submitted && !p.correct && !p.gaveUp) {
         li.className = 'res-wrong';
-        const ptsText = gameMode === 'flag' ? `−2 pts` : '—';
+        const ptsText = (gameMode === 'flag' || gameMode === 'language') ? `−2 pts` : '—';
         li.innerHTML = `<span class="res-icon">✗</span><span class="res-name">${p.name}${myResult ? ' (you)' : ''}</span><span class="res-pts neg">${ptsText}</span>`;
       } else {
         li.className = 'res-none';

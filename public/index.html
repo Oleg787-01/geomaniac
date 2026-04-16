@@ -80,6 +80,13 @@
                 <div class="mode-opt-desc">First to 25 · −2 wrong</div>
               </div>
             </div>
+            <div class="mode-select-opt" id="mode-opt-language" data-mode="language">
+              <span class="mode-opt-icon">🔊</span>
+              <div>
+                <div class="mode-opt-name">Guess the Language</div>
+                <div class="mode-opt-desc">First to 25 · speed bonus</div>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -116,6 +123,15 @@
         </div>
       </div>
 
+      <!-- Language display -->
+      <div id="display-language" class="country-display hidden">
+        <div class="language-audio-area">
+          <div class="audio-icon">🔊</div>
+          <p class="audio-hint">Listen carefully and guess the language!</p>
+          <button id="btn-replay-audio" class="btn btn-secondary">▶ Replay Audio</button>
+        </div>
+      </div>
+
       <!-- Flag display -->
       <div id="display-flag" class="country-display hidden">
         <img id="flag-img" class="flag-img" src="" alt="Flag to identify" />
@@ -149,7 +165,7 @@
 
     <div id="round-overlay" class="round-overlay hidden">
       <div class="overlay-card">
-        <div class="overlay-label">The country was</div>
+        <div class="overlay-label" id="overlay-label">The country was</div>
         <div id="overlay-country-name" class="overlay-country"></div>
         <ul id="overlay-results" class="overlay-results"></ul>
         <div id="overlay-next-text" class="overlay-next">Next round starting...</div>

@@ -1,0 +1,782 @@
+[
+  {
+    "name": "English",
+    "bcp47": "en-US",
+    "aliases": ["english", "eng"],
+    "sentences": [
+      "The weather is absolutely beautiful today.",
+      "I would like a cup of coffee, please.",
+      "Where is the nearest train station?",
+      "My children are playing outside in the garden.",
+      "We had a wonderful dinner with the family last night.",
+      "I enjoy reading books and watching films in the evening.",
+      "The supermarket is closed on Sunday mornings.",
+      "She works as a doctor in the city hospital."
+    ]
+  },
+  {
+    "name": "Spanish",
+    "bcp47": "es-ES",
+    "aliases": ["spanish", "español", "espanol", "castellano"],
+    "sentences": [
+      "El tiempo está muy bonito hoy.",
+      "Me gustaría una taza de café, por favor.",
+      "¿Dónde está la estación de tren más cercana?",
+      "Los niños están jugando en el jardín.",
+      "Tuvimos una cena maravillosa con la familia anoche.",
+      "Me gusta leer libros y ver películas por la tarde.",
+      "El supermercado está cerrado los domingos por la mañana.",
+      "Ella trabaja como médica en el hospital de la ciudad."
+    ]
+  },
+  {
+    "name": "French",
+    "bcp47": "fr-FR",
+    "aliases": ["french", "français", "francais"],
+    "sentences": [
+      "Le temps est absolument magnifique aujourd'hui.",
+      "Je voudrais une tasse de café, s'il vous plaît.",
+      "Où se trouve la gare la plus proche?",
+      "Les enfants jouent dans le jardin.",
+      "Nous avons eu un dîner merveilleux en famille hier soir.",
+      "J'aime lire des livres et regarder des films le soir.",
+      "Le supermarché est fermé le dimanche matin.",
+      "Elle travaille comme médecin à l'hôpital de la ville."
+    ]
+  },
+  {
+    "name": "German",
+    "bcp47": "de-DE",
+    "aliases": ["german", "deutsch"],
+    "sentences": [
+      "Das Wetter ist heute absolut wunderschön.",
+      "Ich hätte gerne eine Tasse Kaffee, bitte.",
+      "Wo ist der nächste Bahnhof?",
+      "Die Kinder spielen draußen im Garten.",
+      "Wir hatten gestern Abend ein wunderbares Familienessen.",
+      "Ich lese gerne Bücher und schaue abends Filme.",
+      "Der Supermarkt ist sonntags morgens geschlossen.",
+      "Sie arbeitet als Ärztin im Krankenhaus der Stadt."
+    ]
+  },
+  {
+    "name": "Italian",
+    "bcp47": "it-IT",
+    "aliases": ["italian", "italiano"],
+    "sentences": [
+      "Il tempo è assolutamente meraviglioso oggi.",
+      "Vorrei una tazza di caffè, per favore.",
+      "Dov'è la stazione ferroviaria più vicina?",
+      "I bambini stanno giocando in giardino.",
+      "Abbiamo cenato meravigliosamente con la famiglia ieri sera.",
+      "Mi piace leggere libri e guardare film la sera.",
+      "Il supermercato è chiuso la domenica mattina.",
+      "Lei lavora come medico nell'ospedale della città."
+    ]
+  },
+  {
+    "name": "Portuguese",
+    "bcp47": "pt-BR",
+    "aliases": ["portuguese", "português", "portugues", "brazilian portuguese"],
+    "sentences": [
+      "O tempo está absolutamente lindo hoje.",
+      "Eu gostaria de uma xícara de café, por favor.",
+      "Onde fica a estação de trem mais próxima?",
+      "As crianças estão brincando no jardim.",
+      "Tivemos um jantar maravilhoso com a família ontem à noite.",
+      "Gosto de ler livros e assistir filmes à noite.",
+      "O supermercado está fechado domingo de manhã.",
+      "Ela trabalha como médica no hospital da cidade."
+    ]
+  },
+  {
+    "name": "Russian",
+    "bcp47": "ru-RU",
+    "aliases": ["russian", "русский"],
+    "sentences": [
+      "Сегодня погода просто великолепная.",
+      "Пожалуйста, принесите мне чашку кофе.",
+      "Где находится ближайшая железнодорожная станция?",
+      "Дети играют в саду.",
+      "Вчера вечером мы замечательно поужинали всей семьёй.",
+      "Я люблю читать книги и смотреть фильмы по вечерам.",
+      "Супермаркет закрыт в воскресенье утром.",
+      "Она работает врачом в городской больнице."
+    ]
+  },
+  {
+    "name": "Ukrainian",
+    "bcp47": "uk-UA",
+    "aliases": ["ukrainian", "українська"],
+    "sentences": [
+      "Сьогодні погода просто чудова.",
+      "Будь ласка, принесіть мені чашку кави.",
+      "Де знаходиться найближча залізнична станція?",
+      "Діти граються в саду.",
+      "Вчора ввечері ми чудово повечеряли з родиною.",
+      "Я люблю читати книги та дивитися фільми ввечері.",
+      "Супермаркет закритий у неділю вранці.",
+      "Вона працює лікарем у міській лікарні."
+    ]
+  },
+  {
+    "name": "Dutch",
+    "bcp47": "nl-NL",
+    "aliases": ["dutch", "nederlands"],
+    "sentences": [
+      "Het weer is vandaag absoluut prachtig.",
+      "Ik wil graag een kopje koffie, alstublieft.",
+      "Waar is het dichtstbijzijnde treinstation?",
+      "De kinderen spelen buiten in de tuin.",
+      "We hadden gisteren avond een geweldige familiediner.",
+      "Ik lees graag boeken en kijk films in de avond.",
+      "De supermarkt is zondagochtend gesloten.",
+      "Ze werkt als arts in het ziekenhuis van de stad."
+    ]
+  },
+  {
+    "name": "Polish",
+    "bcp47": "pl-PL",
+    "aliases": ["polish", "polski"],
+    "sentences": [
+      "Dzisiaj pogoda jest absolutnie piękna.",
+      "Poproszę o filiżankę kawy.",
+      "Gdzie jest najbliższy dworzec kolejowy?",
+      "Dzieci bawią się w ogrodzie.",
+      "Wczoraj wieczorem wspaniale zjedliśmy kolację z rodziną.",
+      "Lubię czytać książki i oglądać filmy wieczorami.",
+      "Supermarket jest zamknięty w niedzielne poranki.",
+      "Ona pracuje jako lekarka w miejskim szpitalu."
+    ]
+  },
+  {
+    "name": "Swedish",
+    "bcp47": "sv-SE",
+    "aliases": ["swedish", "svenska"],
+    "sentences": [
+      "Vädret är absolut fantastiskt idag.",
+      "Jag skulle vilja ha en kopp kaffe, tack.",
+      "Var är närmaste tågstation?",
+      "Barnen leker ute i trädgården.",
+      "Vi hade en underbar familjemiddag igår kväll.",
+      "Jag läser gärna böcker och ser på film på kvällen.",
+      "Snabbköpet är stängt på söndagsmorgnar.",
+      "Hon arbetar som läkare på stadens sjukhus."
+    ]
+  },
+  {
+    "name": "Norwegian",
+    "bcp47": "nb-NO",
+    "aliases": ["norwegian", "norsk"],
+    "sentences": [
+      "Været er absolutt fantastisk i dag.",
+      "Jeg vil gjerne ha en kopp kaffe, takk.",
+      "Hvor er nærmeste togstasjon?",
+      "Barna leker ute i hagen.",
+      "Vi hadde en fantastisk familiemiddag i går kveld.",
+      "Jeg liker å lese bøker og se film om kvelden.",
+      "Supermarkedet er stengt søndag morgen.",
+      "Hun jobber som lege på byens sykehus."
+    ]
+  },
+  {
+    "name": "Danish",
+    "bcp47": "da-DK",
+    "aliases": ["danish", "dansk"],
+    "sentences": [
+      "Vejret er absolut fantastisk i dag.",
+      "Jeg vil gerne have en kop kaffe, tak.",
+      "Hvor er den nærmeste togstation?",
+      "Børnene leger ude i haven.",
+      "Vi havde en vidunderlig familiemiddag i aftes.",
+      "Jeg elsker at læse bøger og se film om aftenen.",
+      "Supermarkedet er lukket søndag morgen.",
+      "Hun arbejder som læge på byens hospital."
+    ]
+  },
+  {
+    "name": "Finnish",
+    "bcp47": "fi-FI",
+    "aliases": ["finnish", "suomi"],
+    "sentences": [
+      "Sää on tänään aivan ihana.",
+      "Haluaisin kupin kahvia, kiitos.",
+      "Missä on lähin rautatieasema?",
+      "Lapset leikkivät ulkona puutarhassa.",
+      "Meillä oli eilen illalla upea perheateria.",
+      "Pidän kirjojen lukemisesta ja elokuvien katsomisesta iltaisin.",
+      "Ruokakauppa on suljettu sunnuntaiaamuisin.",
+      "Hän työskentelee lääkärinä kaupungin sairaalassa."
+    ]
+  },
+  {
+    "name": "Czech",
+    "bcp47": "cs-CZ",
+    "aliases": ["czech", "čeština", "cestina"],
+    "sentences": [
+      "Dnes je absolutně krásné počasí.",
+      "Chtěl bych šálek kávy, prosím.",
+      "Kde je nejbližší vlakové nádraží?",
+      "Děti si hrají venku na zahradě.",
+      "Včera večer jsme měli skvělou rodinnou večeři.",
+      "Rád čtu knihy a večer sleduji filmy.",
+      "Supermarket je o nedělním ránu zavřený.",
+      "Ona pracuje jako lékařka v městské nemocnici."
+    ]
+  },
+  {
+    "name": "Slovak",
+    "bcp47": "sk-SK",
+    "aliases": ["slovak", "slovenčina", "slovencina", "slovakian"],
+    "sentences": [
+      "Dnes je absolútne krásne počasie.",
+      "Chcel by som šálku kávy, prosím.",
+      "Kde je najbližšia železničná stanica?",
+      "Deti sa hrajú vonku v záhrade.",
+      "Včera večer sme mali skvelú rodinnú večeru.",
+      "Rád čítam knihy a večer pozerám filmy.",
+      "Supermarket je v nedeľné ráno zatvorený.",
+      "Ona pracuje ako lekárka v mestskej nemocnici."
+    ]
+  },
+  {
+    "name": "Romanian",
+    "bcp47": "ro-RO",
+    "aliases": ["romanian", "română", "romana"],
+    "sentences": [
+      "Vremea este absolut minunată astăzi.",
+      "Aș dori o ceașcă de cafea, vă rog.",
+      "Unde este cea mai apropiată gară?",
+      "Copiii se joacă afară în grădină.",
+      "Am avut o cină de familie minunată ieri seară.",
+      "Îmi place să citesc cărți și să văd filme seara.",
+      "Supermarketul este închis duminică dimineața.",
+      "Ea lucrează ca medic la spitalul orașului."
+    ]
+  },
+  {
+    "name": "Hungarian",
+    "bcp47": "hu-HU",
+    "aliases": ["hungarian", "magyar"],
+    "sentences": [
+      "Ma az idő egyszerűen gyönyörű.",
+      "Szeretnék egy csésze kávét, kérem.",
+      "Hol van a legközelebbi vasútállomás?",
+      "A gyerekek kint játszanak a kertben.",
+      "Tegnap este csodálatos családi vacsoránk volt.",
+      "Szeretek könyveket olvasni és filmeket nézni esténként.",
+      "A szupermarket vasárnap reggel zárva van.",
+      "A városi kórházban dolgozik orvosként."
+    ]
+  },
+  {
+    "name": "Greek",
+    "bcp47": "el-GR",
+    "aliases": ["greek", "ελληνικά", "ellinika"],
+    "sentences": [
+      "Ο καιρός είναι απολύτως υπέροχος σήμερα.",
+      "Θα ήθελα ένα φλιτζάνι καφέ, παρακαλώ.",
+      "Πού είναι ο κοντινότερος σιδηροδρομικός σταθμός;",
+      "Τα παιδιά παίζουν έξω στον κήπο.",
+      "Χθες βράδυ είχαμε ένα υπέροχο οικογενειακό δείπνο.",
+      "Μου αρέσει να διαβάζω βιβλία και να βλέπω ταινίες τα βράδια.",
+      "Το σούπερ μάρκετ είναι κλειστό τα Κυριακάτικα πρωινά.",
+      "Εργάζεται ως γιατρός στο νοσοκομείο της πόλης."
+    ]
+  },
+  {
+    "name": "Bulgarian",
+    "bcp47": "bg-BG",
+    "aliases": ["bulgarian", "български"],
+    "sentences": [
+      "Днес времето е абсолютно прекрасно.",
+      "Бих искал чаша кафе, моля.",
+      "Къде е най-близката железопътна гара?",
+      "Децата си играят навън в градината.",
+      "Снощи имахме прекрасна семейна вечеря.",
+      "Обичам да чета книги и да гледам филми вечер.",
+      "Супермаркетът е затворен в неделя сутринта.",
+      "Тя работи като лекар в градската болница."
+    ]
+  },
+  {
+    "name": "Croatian",
+    "bcp47": "hr-HR",
+    "aliases": ["croatian", "hrvatski"],
+    "sentences": [
+      "Danas je vrijeme apsolutno predivno.",
+      "Htio bih šalicu kave, molim.",
+      "Gdje je najbliža željeznička stanica?",
+      "Djeca se igraju vani u vrtu.",
+      "Sinoć smo imali divnu obiteljsku večeru.",
+      "Volim čitati knjige i gledati filmove navečer.",
+      "Supermarket je zatvoreno nedjeljom ujutro.",
+      "Ona radi kao liječnica u gradskoj bolnici."
+    ]
+  },
+  {
+    "name": "Serbian",
+    "bcp47": "sr-RS",
+    "aliases": ["serbian", "srpski"],
+    "sentences": [
+      "Данас је време апсолутно дивно.",
+      "Желео бих шољу кафе, молим.",
+      "Где је најближа железничка станица?",
+      "Деца се играју напољу у башти.",
+      "Синоћ смо имали дивну породичну вечеру.",
+      "Волим да читам књиге и гледам филмове увече.",
+      "Супермаркет је затворен у недељу ујутро.",
+      "Она ради као лекар у градској болници."
+    ]
+  },
+  {
+    "name": "Slovenian",
+    "bcp47": "sl-SI",
+    "aliases": ["slovenian", "slovenščina", "slovene"],
+    "sentences": [
+      "Danes je vreme absolutno čudovito.",
+      "Rad bi skodelico kave, prosim.",
+      "Kje je najbližja železniška postaja?",
+      "Otroci se igrajo zunaj v vrtu.",
+      "Včeraj zvečer smo imeli čudovito družinsko večerjo.",
+      "Rad berem knjige in gledam filme zvečer.",
+      "Supermarket je v nedeljo zjutraj zaprt.",
+      "Ona dela kot zdravnica v mestni bolnišnici."
+    ]
+  },
+  {
+    "name": "Lithuanian",
+    "bcp47": "lt-LT",
+    "aliases": ["lithuanian", "lietuvių"],
+    "sentences": [
+      "Šiandien oras yra absoliučiai gražus.",
+      "Norėčiau puodelio kavos, prašau.",
+      "Kur yra artimiausias geležinkelio stotis?",
+      "Vaikai žaidžia lauke sode.",
+      "Vakar vakare turėjome nuostabų šeimos vakarienę.",
+      "Mėgstu skaityti knygas ir žiūrėti filmus vakarais.",
+      "Prekybos centras sekmadienio rytą yra uždarytas.",
+      "Ji dirba gydytoja miesto ligoninėje."
+    ]
+  },
+  {
+    "name": "Latvian",
+    "bcp47": "lv-LV",
+    "aliases": ["latvian", "latviešu"],
+    "sentences": [
+      "Šodien laiks ir absolūti skaists.",
+      "Es gribētu tasīti kafijas, lūdzu.",
+      "Kur atrodas tuvākā dzelzceļa stacija?",
+      "Bērni spēlējas ārā dārzā.",
+      "Vakar vakarā mums bija brīnišķīgas ģimenes vakariņas.",
+      "Man patīk lasīt grāmatas un skatīties filmas vakaros.",
+      "Lielveikals svētdienas rītā ir slēgts.",
+      "Viņa strādā par ārstu pilsētas slimnīcā."
+    ]
+  },
+  {
+    "name": "Estonian",
+    "bcp47": "et-EE",
+    "aliases": ["estonian", "eesti"],
+    "sentences": [
+      "Täna on ilm absoluutselt ilus.",
+      "Ma soovin tassi kohvi, palun.",
+      "Kus on lähim raudteejaam?",
+      "Lapsed mängivad õues aias.",
+      "Eile õhtul oli meil imeline pereõhtusöök.",
+      "Mulle meeldib lugeda raamatuid ja vaadata filme õhtuti.",
+      "Pood on pühapäeva hommikul suletud.",
+      "Ta töötab arstina linna haiglas."
+    ]
+  },
+  {
+    "name": "Turkish",
+    "bcp47": "tr-TR",
+    "aliases": ["turkish", "türkçe", "turkce"],
+    "sentences": [
+      "Bugün hava kesinlikle muhteşem.",
+      "Bir fincan kahve istiyorum, lütfen.",
+      "En yakın tren istasyonu nerede?",
+      "Çocuklar dışarıda bahçede oynuyor.",
+      "Dün gece harika bir aile yemeği yedik.",
+      "Akşamları kitap okumayı ve film izlemeyi severim.",
+      "Süpermarket pazar sabahları kapalı.",
+      "Şehir hastanesinde doktor olarak çalışıyor."
+    ]
+  },
+  {
+    "name": "Catalan",
+    "bcp47": "ca-ES",
+    "aliases": ["catalan", "català", "catala"],
+    "sentences": [
+      "El temps és absolutament meravellós avui.",
+      "Voldria una tassa de cafè, si us plau.",
+      "On és l'estació de tren més propera?",
+      "Els nens juguen fora al jardí.",
+      "Ahir vespre vam tenir un sopar familiar meravellós.",
+      "M'agrada llegir llibres i veure pel·lícules al vespre.",
+      "El supermercat és tancat els diumenges al matí.",
+      "Treballa com a metgessa a l'hospital de la ciutat."
+    ]
+  },
+  {
+    "name": "Welsh",
+    "bcp47": "cy-GB",
+    "aliases": ["welsh", "cymraeg"],
+    "sentences": [
+      "Mae'r tywydd yn absolutely hardd heddiw.",
+      "Hoffwn gael cwpanaid o goffi, os gwelwch yn dda.",
+      "Ble mae'r orsaf dren agosaf?",
+      "Mae'r plant yn chwarae tu allan yn yr ardd.",
+      "Cawsom swper teuluol hyfryd neithiwr.",
+      "Rwy'n mwynhau darllen llyfrau a gwylio ffilmiau gyda'r hwyr.",
+      "Mae'r archfarchnad ar gau fore Sul.",
+      "Mae hi'n gweithio fel meddyg yn ysbyty'r ddinas."
+    ]
+  },
+  {
+    "name": "Albanian",
+    "bcp47": "sq-AL",
+    "aliases": ["albanian", "shqip"],
+    "sentences": [
+      "Sot moti është absolutisht i bukur.",
+      "Do të doja një filxhan kafe, ju lutem.",
+      "Ku është stacioni i trenit më i afërt?",
+      "Fëmijët po luajnë jashtë në kopsht.",
+      "Mbrëmë patëm një darkë familjare të mrekullueshme.",
+      "Më pëlqen të lexoj libra dhe të shoh filma në mbrëmje.",
+      "Supermarketi është i mbyllur të dielave në mëngjes.",
+      "Ajo punon si mjeke në spitalin e qytetit."
+    ]
+  },
+  {
+    "name": "Icelandic",
+    "bcp47": "is-IS",
+    "aliases": ["icelandic", "íslenska", "islenska"],
+    "sentences": [
+      "Veðrið er algerlega frábært í dag.",
+      "Ég vil gjarna fá kaffibolla, takk.",
+      "Hvar er næsta lestarstöð?",
+      "Börnin eru að leika sér úti í garðinum.",
+      "Við höfðum dýrðlegt fjölskyldunesti í gær kvöld.",
+      "Mér líður vel við að lesa bækur og horfa á kvikmyndir á kvöldin.",
+      "Verslunin er lokuð sunnudagsmorgnar.",
+      "Hún starfar sem læknir á sjúkrahúsi borgarinnar."
+    ]
+  },
+  {
+    "name": "Chinese",
+    "bcp47": "zh-CN",
+    "aliases": ["chinese", "mandarin", "mandarin chinese", "chinese mandarin", "普通话", "中文"],
+    "sentences": [
+      "今天的天气真的非常美好。",
+      "请给我一杯咖啡，谢谢。",
+      "最近的火车站在哪里？",
+      "孩子们在外面的花园里玩耍。",
+      "昨天晚上我们一家人共进了一顿美好的晚餐。",
+      "我喜欢在晚上读书和看电影。",
+      "超市星期天早上不开门。",
+      "她在市立医院当医生。"
+    ]
+  },
+  {
+    "name": "Japanese",
+    "bcp47": "ja-JP",
+    "aliases": ["japanese", "日本語"],
+    "sentences": [
+      "今日はとても素晴らしい天気ですね。",
+      "コーヒーを一杯ください。",
+      "一番近い駅はどこですか？",
+      "子供たちは外の庭で遊んでいます。",
+      "昨夜は家族と素晴らしい夕食を楽しみました。",
+      "私は夜に本を読んだり映画を見たりするのが好きです。",
+      "スーパーマーケットは日曜日の朝は閉まっています。",
+      "彼女は市立病院で医師として働いています。"
+    ]
+  },
+  {
+    "name": "Korean",
+    "bcp47": "ko-KR",
+    "aliases": ["korean", "한국어"],
+    "sentences": [
+      "오늘 날씨가 정말 아름답네요.",
+      "커피 한 잔 주세요.",
+      "가장 가까운 기차역이 어디에 있나요?",
+      "아이들이 밖에서 정원에서 놀고 있어요.",
+      "어젯밤에 가족과 함께 훌륭한 저녁 식사를 했어요.",
+      "저는 저녁에 책을 읽고 영화를 보는 것을 좋아해요.",
+      "슈퍼마켓은 일요일 아침에 문을 닫아요.",
+      "그녀는 시립 병원에서 의사로 일하고 있어요."
+    ]
+  },
+  {
+    "name": "Hindi",
+    "bcp47": "hi-IN",
+    "aliases": ["hindi", "हिंदी"],
+    "sentences": [
+      "आज मौसम बिल्कुल खूबसूरत है।",
+      "कृपया मुझे एक कप कॉफी दीजिए।",
+      "निकटतम रेलवे स्टेशन कहाँ है?",
+      "बच्चे बाहर बगीचे में खेल रहे हैं।",
+      "कल रात हमने पूरे परिवार के साथ शानदार रात्रिभोज किया।",
+      "मुझे शाम को किताबें पढ़ना और फिल्में देखना पसंद है।",
+      "सुपरमार्केट रविवार की सुबह बंद रहता है।",
+      "वह शहर के अस्पताल में डॉक्टर के रूप में काम करती है।"
+    ]
+  },
+  {
+    "name": "Bengali",
+    "bcp47": "bn-IN",
+    "aliases": ["bengali", "bangla", "বাংলা"],
+    "sentences": [
+      "আজকের আবহাওয়া একদম সুন্দর।",
+      "অনুগ্রহ করে আমাকে এক কাপ কফি দিন।",
+      "সবচেয়ে কাছের ট্রেন স্টেশন কোথায়?",
+      "শিশুরা বাইরে বাগানে খেলছে।",
+      "গতকাল রাতে আমরা পুরো পরিবার নিয়ে দুর্দান্ত রাতের খাবার খেয়েছিলাম।",
+      "আমি সন্ধ্যায় বই পড়তে এবং চলচ্চিত্র দেখতে পছন্দ করি।",
+      "সুপারমার্কেট রবিবার সকালে বন্ধ থাকে।",
+      "তিনি শহরের হাসপাতালে ডাক্তার হিসেবে কাজ করেন।"
+    ]
+  },
+  {
+    "name": "Urdu",
+    "bcp47": "ur-PK",
+    "aliases": ["urdu", "اردو"],
+    "sentences": [
+      "آج موسم بالکل خوبصورت ہے۔",
+      "براہ کرم مجھے ایک کپ کافی دیں۔",
+      "قریب ترین ریلوے اسٹیشن کہاں ہے؟",
+      "بچے باہر باغیچے میں کھیل رہے ہیں۔",
+      "کل رات ہم نے پورے خاندان کے ساتھ شاندار رات کا کھانا کھایا۔",
+      "مجھے شام کو کتابیں پڑھنا اور فلمیں دیکھنا پسند ہے۔",
+      "سپر مارکیٹ اتوار کی صبح بند ہے۔",
+      "وہ شہر کے ہسپتال میں ڈاکٹر کے طور پر کام کرتی ہے۔"
+    ]
+  },
+  {
+    "name": "Arabic",
+    "bcp47": "ar-SA",
+    "aliases": ["arabic", "العربية", "arab"],
+    "sentences": [
+      "الطقس جميل للغاية اليوم.",
+      "أريد فنجان قهوة من فضلك.",
+      "أين أقرب محطة قطار؟",
+      "الأطفال يلعبون في الخارج في الحديقة.",
+      "أمضينا أمس مساءً عشاءً عائلياً رائعاً.",
+      "أحب قراءة الكتب ومشاهدة الأفلام في المساء.",
+      "السوبر ماركت مغلق صباح الأحد.",
+      "هي تعمل طبيبة في مستشفى المدينة."
+    ]
+  },
+  {
+    "name": "Persian",
+    "bcp47": "fa-IR",
+    "aliases": ["persian", "farsi", "فارسی", "iranian"],
+    "sentences": [
+      "امروز هوا کاملاً زیباست.",
+      "لطفاً یک فنجان قهوه برایم بیاورید.",
+      "نزدیک‌ترین ایستگاه قطار کجاست؟",
+      "بچه‌ها بیرون در باغ بازی می‌کنند.",
+      "دیشب با خانواده شام فوق‌العاده‌ای خوردیم.",
+      "دوست دارم شب‌ها کتاب بخوانم و فیلم ببینم.",
+      "سوپرمارکت صبح یکشنبه تعطیل است.",
+      "او در بیمارستان شهر به عنوان پزشک کار می‌کند."
+    ]
+  },
+  {
+    "name": "Hebrew",
+    "bcp47": "he-IL",
+    "aliases": ["hebrew", "עברית"],
+    "sentences": [
+      "מזג האוויר נפלא לגמרי היום.",
+      "אני רוצה כוס קפה, בבקשה.",
+      "איפה תחנת הרכבת הקרובה ביותר?",
+      "הילדים משחקים בחוץ בגינה.",
+      "אמש היה לנו ארוחת ערב משפחתית נפלאה.",
+      "אני אוהב לקרוא ספרים ולצפות בסרטים בערב.",
+      "הסופרמרקט סגור בבוקר ראשון.",
+      "היא עובדת כרופאה בבית החולים של העיר."
+    ]
+  },
+  {
+    "name": "Thai",
+    "bcp47": "th-TH",
+    "aliases": ["thai", "ภาษาไทย"],
+    "sentences": [
+      "วันนี้อากาศสวยงามมากจริงๆ",
+      "ขอกาแฟหนึ่งถ้วยได้ไหมครับ",
+      "สถานีรถไฟที่ใกล้ที่สุดอยู่ที่ไหน",
+      "เด็กๆ กำลังเล่นอยู่ข้างนอกในสวน",
+      "เมื่อคืนเราทานอาหารเย็นกับครอบครัวอย่างยอดเยี่ยม",
+      "ฉันชอบอ่านหนังสือและดูหนังตอนเย็น",
+      "ซูเปอร์มาร์เก็ตปิดทำการในเช้าวันอาทิตย์",
+      "เธอทำงานเป็นแพทย์ที่โรงพยาบาลของเมือง"
+    ]
+  },
+  {
+    "name": "Vietnamese",
+    "bcp47": "vi-VN",
+    "aliases": ["vietnamese", "tiếng việt"],
+    "sentences": [
+      "Hôm nay thời tiết thật tuyệt vời.",
+      "Tôi muốn một tách cà phê, xin vui lòng.",
+      "Ga tàu hỏa gần nhất ở đâu?",
+      "Bọn trẻ đang chơi ngoài vườn.",
+      "Tối qua cả gia đình chúng tôi có một bữa tối tuyệt vời.",
+      "Tôi thích đọc sách và xem phim vào buổi tối.",
+      "Siêu thị đóng cửa vào sáng Chủ nhật.",
+      "Cô ấy làm việc là bác sĩ tại bệnh viện thành phố."
+    ]
+  },
+  {
+    "name": "Indonesian",
+    "bcp47": "id-ID",
+    "aliases": ["indonesian", "bahasa indonesia"],
+    "sentences": [
+      "Cuaca hari ini benar-benar indah.",
+      "Saya ingin secangkir kopi, tolong.",
+      "Di mana stasiun kereta terdekat?",
+      "Anak-anak sedang bermain di luar di taman.",
+      "Tadi malam kami menikmati makan malam keluarga yang luar biasa.",
+      "Saya suka membaca buku dan menonton film di malam hari.",
+      "Supermarket tutup pada pagi hari Minggu.",
+      "Dia bekerja sebagai dokter di rumah sakit kota."
+    ]
+  },
+  {
+    "name": "Malay",
+    "bcp47": "ms-MY",
+    "aliases": ["malay", "bahasa melayu", "bahasa malaysia"],
+    "sentences": [
+      "Cuaca hari ini sungguh cantik.",
+      "Saya ingin secawan kopi, tolong.",
+      "Di mana stesen kereta api yang paling dekat?",
+      "Kanak-kanak sedang bermain di luar di taman.",
+      "Semalam kami menikmati makan malam keluarga yang indah.",
+      "Saya suka membaca buku dan menonton filem pada waktu malam.",
+      "Pasaraya ditutup pada pagi Ahad.",
+      "Dia bekerja sebagai doktor di hospital bandar."
+    ]
+  },
+  {
+    "name": "Filipino",
+    "bcp47": "fil-PH",
+    "aliases": ["filipino", "tagalog", "pilipino"],
+    "sentences": [
+      "Ang panahon ngayon ay napakaganda.",
+      "Gusto ko ng isang tasa ng kape, pakiusap.",
+      "Nasaan ang pinakamalapit na estasyon ng tren?",
+      "Ang mga bata ay naglalaro sa labas sa hardin.",
+      "Kagabi ay nagkaroon kami ng isang magandang hapunang pampamilya.",
+      "Mahilig akong magbasa ng mga libro at manood ng mga pelikula sa gabi.",
+      "Ang supermarket ay sarado sa umaga ng Linggo.",
+      "Nagtatrabaho siya bilang doktor sa ospital ng lungsod."
+    ]
+  },
+  {
+    "name": "Tamil",
+    "bcp47": "ta-IN",
+    "aliases": ["tamil", "தமிழ்"],
+    "sentences": [
+      "இன்று வானிலை மிகவும் அழகாக உள்ளது.",
+      "தயவுசெய்து ஒரு கப் காபி தாருங்கள்.",
+      "அருகிலுள்ள ரயில் நிலையம் எங்கே உள்ளது?",
+      "குழந்தைகள் வெளியே தோட்டத்தில் விளையாடுகிறார்கள்.",
+      "நேற்று இரவு நாங்கள் குடும்பத்துடன் அற்புதமான இரவு உணவு சாப்பிட்டோம்.",
+      "இரவில் புத்தகங்கள் படிக்கவும் திரைப்படங்கள் பார்க்கவும் விரும்புகிறேன்.",
+      "சூப்பர்மார்க்கெட் ஞாயிற்றுக்கிழமை காலையில் மூடியிருக்கும்.",
+      "அவர் நகர மருத்துவமனையில் மருத்துவராக பணிபுரிகிறார்."
+    ]
+  },
+  {
+    "name": "Swahili",
+    "bcp47": "sw-KE",
+    "aliases": ["swahili", "kiswahili"],
+    "sentences": [
+      "Hali ya hewa ni nzuri kabisa leo.",
+      "Ningependa kikombe cha kahawa, tafadhali.",
+      "Kituo cha treni kilicho karibu zaidi kiko wapi?",
+      "Watoto wanacheza nje bustanini.",
+      "Jana usiku tulikuwa na chakula cha jioni cha familia kizuri sana.",
+      "Napenda kusoma vitabu na kutazama filamu jioni.",
+      "Supermarket imefungwa asubuhi ya Jumapili.",
+      "Yeye anafanya kazi kama daktari katika hospitali ya mji."
+    ]
+  },
+  {
+    "name": "Belarusian",
+    "bcp47": "be-BY",
+    "aliases": ["belarusian", "беларуская", "byelorussian"],
+    "sentences": [
+      "Сёння надвор'е абсалютна цудоўнае.",
+      "Калі ласка, прынясіце мне кубак кавы.",
+      "Дзе знаходзіцца бліжэйшая чыгуначная станцыя?",
+      "Дзеці гуляюць на вуліцы ў садзе.",
+      "Учора ўвечары мы выдатна павячэралі з сям'ёй.",
+      "Я люблю чытаць кнігі і глядзець фільмы па вечарах.",
+      "Супермаркет зачынены ў нядзелю раніцай.",
+      "Яна працуе ўрачом у гарадской бальніцы."
+    ]
+  },
+  {
+    "name": "Macedonian",
+    "bcp47": "mk-MK",
+    "aliases": ["macedonian", "македонски"],
+    "sentences": [
+      "Денес времето е апсолутно прекрасно.",
+      "Би сакал чаша кафе, те молам.",
+      "Каде е најблиската железничка станица?",
+      "Децата играат надвор во градината.",
+      "Вчера навечер имавме прекрасна семејна вечера.",
+      "Сакам да читам книги и да гледам филмови навечер.",
+      "Супермаркетот е затворен во недела наутро.",
+      "Таа работи како лекар во градската болница."
+    ]
+  },
+  {
+    "name": "Irish",
+    "bcp47": "ga-IE",
+    "aliases": ["irish", "gaelic", "irish gaelic", "gaeilge"],
+    "sentences": [
+      "Tá an aimsir go hálainn ar fad inniu.",
+      "Ba mhaith liom cupán caife, le do thoil.",
+      "Cá bhfuil an stáisiún traenach is gaire?",
+      "Tá na páistí ag súgradh amuigh sa ghairdín.",
+      "Bhí dinnéar teaghlaigh iontach againn aréir.",
+      "Is maith liom leabhair a léamh agus scannáin a fheiceáil istoíche.",
+      "Tá an ollmhargadh dúnta maidin Dé Domhnaigh.",
+      "Oibríonn sí mar dhochtúir in ospidéal na cathrach."
+    ]
+  },
+  {
+    "name": "Nepali",
+    "bcp47": "ne-NP",
+    "aliases": ["nepali", "नेपाली"],
+    "sentences": [
+      "आज मौसम एकदम राम्रो छ।",
+      "कृपया मलाई एक कप कफी दिनुस्।",
+      "सबैभन्दा नजिकको रेलवे स्टेशन कहाँ छ?",
+      "बच्चाहरू बाहिर बगैंचामा खेल्दैछन्।",
+      "हिजो राति हामीले परिवारसँग उत्कृष्ट रात्रिभोज खायौं।",
+      "मलाई साँझमा किताब पढ्न र चलचित्र हेर्न मन पर्छ।",
+      "सुपरमार्केट आइतबार बिहान बन्द हुन्छ।",
+      "उनी शहरको अस्पतालमा डाक्टरको रूपमा काम गर्छिन्।"
+    ]
+  },
+  {
+    "name": "Mongolian",
+    "bcp47": "mn-MN",
+    "aliases": ["mongolian", "монгол"],
+    "sentences": [
+      "Өнөөдөр цаг агаар үнэхээр гоё байна.",
+      "Нэг аяга кофе авна уу.",
+      "Хамгийн ойрын галт тэрэгний буудал хаана байна вэ?",
+      "Хүүхдүүд гадаа цэцэрлэгт тоглож байна.",
+      "Өчигдөр оройдоо гэр бүлээрээ гайхалтай оройн хоол идсэн.",
+      "Би оройдоо ном уншиж, кино үзэхийг дуртай.",
+      "Дэлгүүр ням гарагийн өглөө хаалттай байдаг.",
+      "Тэр хотын эмнэлэгт эмч хийж ажилладаг."
+    ]
+  }
+]
