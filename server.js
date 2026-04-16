@@ -10,7 +10,6 @@ const io = new Server(server);
 
 app.use(express.static(path.join(__dirname, 'public')));
 
-// ── Constants ──
 const ROUNDS_PER_GAME    = 5;
 const ROUND_TIME_SECONDS = 30;
 const CORRECT_POINTS     = 5;
@@ -18,22 +17,18 @@ const FIRST_BONUS        = 2;
 const FLAG_WIN_SCORE     = 25;
 const FLAG_WRONG_PENALTY = 2;
 
-// ── Country data ──
-const ALL_COUNTRIES = JSON.parse(
-  fs.readFileSync(path.join(__dirname, 'public', 'countries.json'), 'utf8')
-);
+const ALL_COUNTRIES     = JSON.parse(fs.readFileSync(path.join(__dirname, 'public', 'countries.json'), 'utf8'));
 const OUTLINE_COUNTRIES = ALL_COUNTRIES.filter(c => c.id);
 const FLAG_COUNTRIES    = ALL_COUNTRIES.filter(c => c.alpha2);
 
 const rooms = new Map();
 
-// ── Helpers ──
 function generateRoomCode() {
   return Math.random().toString(36).substring(2, 8).toUpperCase();
 }
 
-function getRandomCountry(pool, usedIds) {
-  const available = pool.filter(c => !usedIds.includes(c.id || c.alpha2));
+function getRandomCountry(pool, usedKeys) {
+  const available = pool.filter(c => !usedKeys.includes(c.id || c.alpha2));
   const source = available.length > 0 ? available : pool;
   return source[Math.floor(Math.random() * source.length)];
 }
@@ -48,17 +43,49 @@ function isGuessCorrect(guess, country) {
   return (country.aliases || []).some(a => normalizeGuess(a) === g);
 }
 
+// ── Helper to remove a player from their room ──
+function removePlayerFromRoom(socketId, socketObj) {
+  for (const [code, room] of rooms) {
+    const idx = room.players.findIndex(p => p.id === socketId);
+    if (idx === -1) continue;
+
+    room.players.splice(idx, 1);
+    if (socketObj) socketObj.leave(code);
+
+    if (room.players.length === 0) {
+      if (room.roundTimer) clearTimeout(room.roundTimer);
+      rooms.delete(code);
+    } else {
+      if (room.host === socketId) {
+        room.host = room.players[0].id;
+        io.to(code).emit('newHost', { hostId: room.host });
+      }
+      io.to(code).emit('lobbyUpdate', { players: room.players });
+
+      // If a round is in progress, check if remaining players are all done
+      if (room.gameState === 'playing') {
+        const allDone = room.gameMode === 'flag'
+          ? room.players.every(p => room.flagGuesses[p.id] !== undefined)
+          : room.players.every(p => room.roundGuesses[p.id] !== undefined);
+        if (allDone && room.players.length > 0) endRound(code);
+      }
+    }
+    break;
+  }
+}
+
 // ── Round management ──
 function startRound(roomCode) {
   const room = rooms.get(roomCode);
   if (!room) return;
 
   room.currentRound++;
-  room.gameState = 'playing';
-  room.roundGuesses = {};
+  room.gameState    = 'playing';
+  room.roundGuesses = {};   // outline: playerId -> true/false
+  room.flagGuesses  = {};   // flag: playerId -> { guess, correct, submittedAt }
   room.firstCorrect = null;
 
-  const pool = room.gameMode === 'flag' ? FLAG_COUNTRIES : OUTLINE_COUNTRIES;
+  const pool    = room.gameMode === 'flag' ? FLAG_COUNTRIES : OUTLINE_COUNTRIES;
   const country = getRandomCountry(pool, room.usedCountryKeys);
   room.currentCountry = country;
   room.usedCountryKeys.push(country.id || country.alpha2);
@@ -70,7 +97,7 @@ function startRound(roomCode) {
     timeLimit: ROUND_TIME_SECONDS,
     winScore: room.gameMode === 'flag' ? FLAG_WIN_SCORE : null,
   };
-  if (room.gameMode === 'outline') payload.countryId = country.id;
+  if (room.gameMode === 'outline') payload.countryId  = country.id;
   if (room.gameMode === 'flag')    payload.flagAlpha2 = country.alpha2;
 
   io.to(roomCode).emit('roundStart', payload);
@@ -83,22 +110,72 @@ function endRound(roomCode) {
 
   clearTimeout(room.roundTimer);
   room.roundTimer = null;
-  room.gameState = 'roundEnd';
+  room.gameState  = 'roundEnd';
+
+  let playerResults = [];
+  let flagHasWinner = false;
+
+  if (room.gameMode === 'flag') {
+    // Determine first correct submitter
+    const correctSubs = Object.entries(room.flagGuesses)
+      .filter(([, g]) => g.correct)
+      .sort((a, b) => a[1].submittedAt - b[1].submittedAt);
+    const firstCorrectId = correctSubs.length > 0 ? correctSubs[0][0] : null;
+
+    // Apply points to every player
+    room.players.forEach(p => {
+      const g = room.flagGuesses[p.id];
+      let points = 0;
+      let isFirst = false;
+
+      if (g && g.correct) {
+        points  = CORRECT_POINTS + (p.id === firstCorrectId ? FIRST_BONUS : 0);
+        isFirst = p.id === firstCorrectId;
+      } else if (g && !g.correct) {
+        points = -FLAG_WRONG_PENALTY;
+      }
+      // No guess → 0 points
+
+      p.score += points;
+      playerResults.push({
+        id: p.id, name: p.name,
+        correct: !!(g && g.correct),
+        submitted: !!g,
+        points,
+        isFirst,
+        totalScore: p.score,
+      });
+    });
+
+    flagHasWinner = room.players.some(p => p.score >= FLAG_WIN_SCORE);
+  } else {
+    // Outline: points were already applied in submitGuess; build results list
+    room.players.forEach(p => {
+      playerResults.push({
+        id: p.id, name: p.name,
+        correct: room.roundGuesses[p.id] === true,
+        submitted: room.roundGuesses[p.id] !== undefined,
+        points: null, // already applied live
+        isFirst: room.firstCorrect === p.id,
+        totalScore: p.score,
+      });
+    });
+  }
 
   io.to(roomCode).emit('roundEnd', {
     correctAnswer: room.currentCountry.name,
     scores: room.players.map(p => ({ id: p.id, name: p.name, score: p.score })),
+    playerResults,
     round: room.currentRound,
     totalRounds: room.gameMode === 'outline' ? ROUNDS_PER_GAME : null,
     gameMode: room.gameMode,
   });
 
-  const shouldEnd = room.gameMode === 'outline' && room.currentRound >= ROUNDS_PER_GAME;
-  if (shouldEnd) {
-    setTimeout(() => endGame(roomCode), 4000);
-  } else {
-    setTimeout(() => startRound(roomCode), 4000);
-  }
+  const shouldEnd =
+    (room.gameMode === 'outline' && room.currentRound >= ROUNDS_PER_GAME) ||
+    (room.gameMode === 'flag'    && flagHasWinner);
+
+  setTimeout(() => shouldEnd ? endGame(roomCode) : startRound(roomCode), 4000);
 }
 
 function endGame(roomCode) {
@@ -106,22 +183,21 @@ function endGame(roomCode) {
   if (!room) return;
 
   room.gameState = 'gameEnd';
-  const sorted = [...room.players].sort((a, b) => b.score - a.score);
-  const topScore = sorted[0].score;
-  const topPlayers = sorted.filter(p => p.score === topScore);
-  const isDraw = topPlayers.length > 1;
+  const sorted    = [...room.players].sort((a, b) => b.score - a.score);
+  const topScore  = sorted[0].score;
+  const topGroup  = sorted.filter(p => p.score === topScore);
+  const isDraw    = topGroup.length > 1;
 
   io.to(roomCode).emit('gameEnd', {
     results: sorted.map(p => ({ id: p.id, name: p.name, score: p.score })),
     winner: isDraw ? null : sorted[0],
     isDraw,
-    drawPlayers: isDraw ? topPlayers.map(p => p.name) : [],
+    drawPlayers: isDraw ? topGroup.map(p => p.name) : [],
   });
 }
 
 // ── Socket handlers ──
 io.on('connection', (socket) => {
-  console.log('Connected:', socket.id);
 
   socket.on('createRoom', ({ name }) => {
     if (!name || !name.trim()) return;
@@ -135,6 +211,7 @@ io.on('connection', (socket) => {
       currentRound: 0,
       currentCountry: null,
       roundGuesses: {},
+      flagGuesses: {},
       firstCorrect: null,
       roundTimer: null,
       usedCountryKeys: [],
@@ -147,9 +224,9 @@ io.on('connection', (socket) => {
   socket.on('joinRoom', ({ code, name }) => {
     if (!name || !name.trim()) return;
     const room = rooms.get((code || '').toUpperCase().trim());
-    if (!room) { socket.emit('joinError', { message: 'Room not found.' }); return; }
-    if (room.gameState !== 'lobby') { socket.emit('joinError', { message: 'Game already in progress.' }); return; }
-    if (room.players.length >= 8) { socket.emit('joinError', { message: 'Room is full (max 8).' }); return; }
+    if (!room)                     { socket.emit('joinError', { message: 'Room not found.' }); return; }
+    if (room.gameState !== 'lobby'){ socket.emit('joinError', { message: 'Game already in progress.' }); return; }
+    if (room.players.length >= 8)  { socket.emit('joinError', { message: 'Room is full (max 8).' }); return; }
 
     room.players.push({ id: socket.id, name: name.trim(), score: 0 });
     socket.join(room.code);
@@ -157,13 +234,18 @@ io.on('connection', (socket) => {
     socket.to(room.code).emit('lobbyUpdate', { players: room.players });
   });
 
+  // Player voluntarily leaves (clicks logo / navigates away)
+  socket.on('leaveRoom', () => {
+    removePlayerFromRoom(socket.id, socket);
+  });
+
   socket.on('startGame', ({ gameMode }) => {
     for (const [code, room] of rooms) {
       if (room.host === socket.id && room.gameState === 'lobby') {
         room.players.forEach(p => { p.score = 0; });
-        room.currentRound = 0;
+        room.currentRound    = 0;
         room.usedCountryKeys = [];
-        room.gameMode = gameMode || 'outline';
+        room.gameMode        = gameMode || 'outline';
         startRound(code);
         return;
       }
@@ -178,47 +260,45 @@ io.on('connection', (socket) => {
       if (!player) continue;
       if (room.gameState !== 'playing') return;
 
-      const alreadyCorrect = room.roundGuesses[socket.id] === true;
-      if (alreadyCorrect) return;
+      if (room.gameMode === 'flag') {
+        // Flag mode: one guess per round, no immediate right/wrong reveal
+        if (room.flagGuesses[socket.id] !== undefined) return; // already submitted
 
-      // Outline mode: one guess total
-      if (room.gameMode === 'outline' && room.roundGuesses[socket.id] !== undefined) return;
+        const correct = isGuessCorrect(guess, room.currentCountry);
+        room.flagGuesses[socket.id] = { guess: guess.trim(), correct, submittedAt: Date.now() };
 
-      const correct = isGuessCorrect(guess, room.currentCountry);
+        // Tell the guesser their answer is recorded (no right/wrong yet)
+        socket.emit('guessSubmitted');
 
-      if (correct) {
-        room.roundGuesses[socket.id] = true;
-        let points = CORRECT_POINTS;
-        const isFirst = room.firstCorrect === null;
-        if (isFirst) { room.firstCorrect = socket.id; points += FIRST_BONUS; }
-        player.score += points;
+        // Tell others this player has submitted (no answer revealed)
+        socket.to(code).emit('playerSubmitted', { playerName: player.name });
 
-        socket.emit('guessResult', { correct: true, points, isFirst, totalScore: player.score });
-        socket.to(code).emit('playerGuessed', { playerName: player.name, correct: true, isFirst });
-
-        // Flag mode: check win condition immediately
-        if (room.gameMode === 'flag' && player.score >= FLAG_WIN_SCORE) {
-          clearTimeout(room.roundTimer);
-          room.roundTimer = null;
-          endGame(code);
-          return;
-        }
-
-        // End round if everyone answered correctly
-        const allCorrect = room.players.every(p => room.roundGuesses[p.id] === true);
-        if (allCorrect) endRound(code);
+        // End round early if everyone has submitted
+        const allIn = room.players.every(p => room.flagGuesses[p.id] !== undefined);
+        if (allIn) endRound(code);
 
       } else {
-        if (room.gameMode === 'flag') {
-          // Wrong in flag mode: -2 penalty, keep guessing allowed
-          room.roundGuesses[socket.id] = false;
-          player.score -= FLAG_WRONG_PENALTY;
-          socket.emit('guessResult', { correct: false, penalty: FLAG_WRONG_PENALTY, totalScore: player.score });
+        // Outline mode: one guess, points applied immediately
+        if (room.roundGuesses[socket.id] !== undefined) return;
+
+        const correct = isGuessCorrect(guess, room.currentCountry);
+        room.roundGuesses[socket.id] = correct;
+
+        if (correct) {
+          const isFirst = room.firstCorrect === null;
+          if (isFirst) room.firstCorrect = socket.id;
+          const points = CORRECT_POINTS + (isFirst ? FIRST_BONUS : 0);
+          player.score += points;
+          socket.emit('guessResult', { correct: true, points, isFirst, totalScore: player.score });
+          socket.to(code).emit('playerGuessed', { playerName: player.name, correct: true, isFirst });
         } else {
-          // Wrong in outline mode: locked out for round
-          room.roundGuesses[socket.id] = false;
           socket.emit('guessResult', { correct: false, totalScore: player.score });
+          socket.to(code).emit('playerGuessed', { playerName: player.name, correct: false });
         }
+
+        // End round if all players have guessed
+        const allDone = room.players.every(p => room.roundGuesses[p.id] !== undefined);
+        if (allDone) endRound(code);
       }
       return;
     }
@@ -229,13 +309,20 @@ io.on('connection', (socket) => {
       const player = room.players.find(p => p.id === socket.id);
       if (!player) continue;
       if (room.gameState !== 'playing') return;
-      if (room.roundGuesses[socket.id] === true) return;
 
-      room.roundGuesses[socket.id] = false;
-      socket.emit('guessResult', { correct: false, gaveUp: true, totalScore: player.score });
-      socket.to(code).emit('playerGuessed', { playerName: player.name, correct: false });
-
-      if (room.gameMode === 'outline') {
+      if (room.gameMode === 'flag') {
+        if (room.flagGuesses[socket.id] !== undefined) return;
+        // Give up = mark as submitted with no answer (0 pts, won't count as wrong)
+        room.flagGuesses[socket.id] = { guess: null, correct: false, gaveUp: true, submittedAt: Date.now() };
+        socket.emit('guessSubmitted', { gaveUp: true });
+        socket.to(code).emit('playerSubmitted', { playerName: player.name });
+        const allIn = room.players.every(p => room.flagGuesses[p.id] !== undefined);
+        if (allIn) endRound(code);
+      } else {
+        if (room.roundGuesses[socket.id] !== undefined) return;
+        room.roundGuesses[socket.id] = false;
+        socket.emit('guessResult', { correct: false, gaveUp: true, totalScore: player.score });
+        socket.to(code).emit('playerGuessed', { playerName: player.name, correct: false });
         const allDone = room.players.every(p => room.roundGuesses[p.id] !== undefined);
         if (allDone) endRound(code);
       }
@@ -247,9 +334,9 @@ io.on('connection', (socket) => {
     for (const [code, room] of rooms) {
       if (room.host === socket.id && room.gameState === 'gameEnd') {
         room.players.forEach(p => { p.score = 0; });
-        room.currentRound = 0;
+        room.currentRound    = 0;
         room.usedCountryKeys = [];
-        room.gameState = 'lobby';
+        room.gameState       = 'lobby';
         io.to(code).emit('backToLobby', { players: room.players });
         return;
       }
@@ -257,30 +344,7 @@ io.on('connection', (socket) => {
   });
 
   socket.on('disconnect', () => {
-    for (const [code, room] of rooms) {
-      const idx = room.players.findIndex(p => p.id === socket.id);
-      if (idx === -1) continue;
-
-      room.players.splice(idx, 1);
-      if (room.players.length === 0) {
-        if (room.roundTimer) clearTimeout(room.roundTimer);
-        rooms.delete(code);
-      } else {
-        if (room.host === socket.id) {
-          room.host = room.players[0].id;
-          io.to(code).emit('newHost', { hostId: room.host });
-        }
-        io.to(code).emit('lobbyUpdate', { players: room.players });
-
-        if (room.gameState === 'playing') {
-          const allDone = room.gameMode === 'outline'
-            ? room.players.every(p => room.roundGuesses[p.id] !== undefined)
-            : room.players.every(p => room.roundGuesses[p.id] === true);
-          if (allDone && room.players.length > 0) endRound(code);
-        }
-      }
-      break;
-    }
+    removePlayerFromRoom(socket.id, null);
   });
 });
 
