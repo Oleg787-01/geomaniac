@@ -3,26 +3,47 @@ const http = require('http');
 const { Server } = require('socket.io');
 const path = require('path');
 const fs = require('fs');
+const crypto = require('crypto');
+const OpenAI = require('openai');
 
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
 
+// ── Audio cache (OpenAI TTS) ──
+const AUDIO_CACHE_DIR = path.join(__dirname, 'audio_cache');
+if (!fs.existsSync(AUDIO_CACHE_DIR)) fs.mkdirSync(AUDIO_CACHE_DIR, { recursive: true });
+app.use('/audio', express.static(AUDIO_CACHE_DIR));
+
 app.use(express.static(path.join(__dirname, 'public')));
+
+const openai = process.env.OPENAI_API_KEY ? new OpenAI({ apiKey: process.env.OPENAI_API_KEY }) : null;
+
+async function generateLanguageAudio(text, gender) {
+  const hash = crypto.createHash('md5').update(text + '|' + gender).digest('hex');
+  const filename = `${hash}.mp3`;
+  const filepath = path.join(AUDIO_CACHE_DIR, filename);
+  if (fs.existsSync(filepath)) return filename;
+  if (!openai) throw new Error('OPENAI_API_KEY not set');
+  const voice = gender === 'female' ? 'nova' : 'onyx';
+  const mp3 = await openai.audio.speech.create({ model: 'tts-1', voice, input: text, speed: 0.85 });
+  fs.writeFileSync(filepath, Buffer.from(await mp3.arrayBuffer()));
+  return filename;
+}
 
 const ROUNDS_PER_GAME    = 5;
 const ROUND_TIME_SECONDS = 30;
 const CORRECT_POINTS     = 5;
 const FIRST_BONUS        = 2;
-const FLAG_WIN_SCORE      = 25;
-const FLAG_WRONG_PENALTY  = 2;
-const LANG_WIN_SCORE      = 25;
-const LANG_WRONG_PENALTY  = 2;
+const FLAG_WIN_SCORE     = 25;
+const FLAG_WRONG_PENALTY = 2;
+const LANG_WIN_SCORE     = 25;
+const LANG_WRONG_PENALTY = 2;
 
-const ALL_COUNTRIES       = JSON.parse(fs.readFileSync(path.join(__dirname, 'public', 'countries.json'), 'utf8'));
-const OUTLINE_COUNTRIES   = ALL_COUNTRIES.filter(c => c.id);
-const FLAG_COUNTRIES      = ALL_COUNTRIES.filter(c => c.alpha2);
-const LANGUAGE_COUNTRIES  = JSON.parse(fs.readFileSync(path.join(__dirname, 'public', 'languages.json'), 'utf8'));
+const ALL_COUNTRIES      = JSON.parse(fs.readFileSync(path.join(__dirname, 'public', 'countries.json'), 'utf8'));
+const OUTLINE_COUNTRIES  = ALL_COUNTRIES.filter(c => c.id);
+const FLAG_COUNTRIES     = ALL_COUNTRIES.filter(c => c.alpha2);
+const LANGUAGE_COUNTRIES = JSON.parse(fs.readFileSync(path.join(__dirname, 'public', 'languages.json'), 'utf8'));
 
 const rooms = new Map();
 
@@ -46,7 +67,6 @@ function isGuessCorrect(guess, country) {
   return (country.aliases || []).some(a => normalizeGuess(a) === g);
 }
 
-// ── Helper to remove a player from their room ──
 function removePlayerFromRoom(socketId, socketObj) {
   for (const [code, room] of rooms) {
     const idx = room.players.findIndex(p => p.id === socketId);
@@ -65,9 +85,9 @@ function removePlayerFromRoom(socketId, socketObj) {
       }
       io.to(code).emit('lobbyUpdate', { players: room.players });
 
-      // If a round is in progress, check if remaining players are all done
       if (room.gameState === 'playing') {
-        const allDone = room.gameMode === 'flag'
+        const usesFlags = room.gameMode === 'flag' || room.gameMode === 'language';
+        const allDone = usesFlags
           ? room.players.every(p => room.flagGuesses[p.id] !== undefined)
           : room.players.every(p => room.roundGuesses[p.id] !== undefined);
         if (allDone && room.players.length > 0) endRound(code);
@@ -78,14 +98,14 @@ function removePlayerFromRoom(socketId, socketObj) {
 }
 
 // ── Round management ──
-function startRound(roomCode) {
+async function startRound(roomCode) {
   const room = rooms.get(roomCode);
   if (!room) return;
 
   room.currentRound++;
   room.gameState    = 'playing';
-  room.roundGuesses = {};   // outline: playerId -> true/false
-  room.flagGuesses  = {};   // flag: playerId -> { guess, correct, submittedAt }
+  room.roundGuesses = {};
+  room.flagGuesses  = {};
   room.firstCorrect = null;
 
   const payload = {
@@ -104,10 +124,18 @@ function startRound(roomCode) {
     room.usedCountryKeys.push(lang.name);
     const sentence = lang.sentences[Math.floor(Math.random() * lang.sentences.length)];
     room.currentSentence = sentence;
+    const gender = Math.random() < 0.5 ? 'male' : 'female';
+
+    try {
+      const audioFilename = await generateLanguageAudio(sentence, gender);
+      if (!rooms.get(roomCode)) return;
+      payload.audioUrl = `/audio/${audioFilename}`;
+    } catch (err) {
+      console.error('TTS error:', err.message);
+      if (!rooms.get(roomCode)) return;
+      payload.audioUrl = null;
+    }
     room.roundStartTime = Date.now();
-    payload.sentenceText = sentence;
-    payload.langBcp47    = lang.bcp47;
-    payload.gender       = Math.random() < 0.5 ? 'male' : 'female';
   } else {
     const pool    = room.gameMode === 'flag' ? FLAG_COUNTRIES : OUTLINE_COUNTRIES;
     const country = getRandomCountry(pool, room.usedCountryKeys);
@@ -174,13 +202,12 @@ function endRound(roomCode) {
       (room.gameMode === 'flag'     && room.players.some(p => p.score >= FLAG_WIN_SCORE)) ||
       (room.gameMode === 'language' && room.players.some(p => p.score >= LANG_WIN_SCORE));
   } else {
-    // Outline: points were already applied in submitGuess; build results list
     room.players.forEach(p => {
       playerResults.push({
         id: p.id, name: p.name,
         correct: room.roundGuesses[p.id] === true,
         submitted: room.roundGuesses[p.id] !== undefined,
-        points: null, // already applied live
+        points: null,
         isFirst: room.firstCorrect === p.id,
         totalScore: p.score,
       });
@@ -208,10 +235,10 @@ function endGame(roomCode) {
   if (!room) return;
 
   room.gameState = 'gameEnd';
-  const sorted    = [...room.players].sort((a, b) => b.score - a.score);
-  const topScore  = sorted[0].score;
-  const topGroup  = sorted.filter(p => p.score === topScore);
-  const isDraw    = topGroup.length > 1;
+  const sorted   = [...room.players].sort((a, b) => b.score - a.score);
+  const topScore = sorted[0].score;
+  const topGroup = sorted.filter(p => p.score === topScore);
+  const isDraw   = topGroup.length > 1;
 
   io.to(roomCode).emit('gameEnd', {
     results: sorted.map(p => ({ id: p.id, name: p.name, score: p.score })),
@@ -251,9 +278,9 @@ io.on('connection', (socket) => {
   socket.on('joinRoom', ({ code, name }) => {
     if (!name || !name.trim()) return;
     const room = rooms.get((code || '').toUpperCase().trim());
-    if (!room)                     { socket.emit('joinError', { message: 'Room not found.' }); return; }
-    if (room.gameState !== 'lobby'){ socket.emit('joinError', { message: 'Game already in progress.' }); return; }
-    if (room.players.length >= 8)  { socket.emit('joinError', { message: 'Room is full (max 8).' }); return; }
+    if (!room)                      { socket.emit('joinError', { message: 'Room not found.' }); return; }
+    if (room.gameState !== 'lobby') { socket.emit('joinError', { message: 'Game already in progress.' }); return; }
+    if (room.players.length >= 8)   { socket.emit('joinError', { message: 'Room is full (max 8).' }); return; }
 
     room.players.push({ id: socket.id, name: name.trim(), score: 0 });
     socket.join(room.code);
@@ -261,7 +288,6 @@ io.on('connection', (socket) => {
     socket.to(room.code).emit('lobbyUpdate', { players: room.players });
   });
 
-  // Player voluntarily leaves (clicks logo / navigates away)
   socket.on('leaveRoom', () => {
     removePlayerFromRoom(socket.id, socket);
   });
@@ -297,25 +323,19 @@ io.on('connection', (socket) => {
       if (!player) continue;
       if (room.gameState !== 'playing') return;
 
-      if (room.gameMode === 'flag') {
-        // Flag mode: one guess per round, no immediate right/wrong reveal
-        if (room.flagGuesses[socket.id] !== undefined) return; // already submitted
+      if (room.gameMode === 'flag' || room.gameMode === 'language') {
+        if (room.flagGuesses[socket.id] !== undefined) return;
 
         const correct = isGuessCorrect(guess, room.currentCountry);
         room.flagGuesses[socket.id] = { guess: guess.trim(), correct, submittedAt: Date.now() };
 
-        // Tell the guesser their answer is recorded (no right/wrong yet)
         socket.emit('guessSubmitted');
-
-        // Tell others this player has submitted (no answer revealed)
         socket.to(code).emit('playerSubmitted', { playerName: player.name });
 
-        // End round early if everyone has submitted
         const allIn = room.players.every(p => room.flagGuesses[p.id] !== undefined);
         if (allIn) endRound(code);
 
       } else {
-        // Outline mode: one guess, points applied immediately
         if (room.roundGuesses[socket.id] !== undefined) return;
 
         const correct = isGuessCorrect(guess, room.currentCountry);
@@ -333,7 +353,6 @@ io.on('connection', (socket) => {
           socket.to(code).emit('playerGuessed', { playerName: player.name, correct: false });
         }
 
-        // End round if all players have guessed
         const allDone = room.players.every(p => room.roundGuesses[p.id] !== undefined);
         if (allDone) endRound(code);
       }
@@ -347,9 +366,8 @@ io.on('connection', (socket) => {
       if (!player) continue;
       if (room.gameState !== 'playing') return;
 
-      if (room.gameMode === 'flag') {
+      if (room.gameMode === 'flag' || room.gameMode === 'language') {
         if (room.flagGuesses[socket.id] !== undefined) return;
-        // Give up = mark as submitted with no answer (0 pts, won't count as wrong)
         room.flagGuesses[socket.id] = { guess: null, correct: false, gaveUp: true, submittedAt: Date.now() };
         socket.emit('guessSubmitted', { gaveUp: true });
         socket.to(code).emit('playerSubmitted', { playerName: player.name });

@@ -216,34 +216,12 @@ const $displayOutline   = document.getElementById('display-outline');
 const $displayFlag      = document.getElementById('display-flag');
 const $displayLanguage  = document.getElementById('display-language');
 
-let currentSentenceText = '';
-let currentLangBcp47    = '';
-let currentGender       = 'male';
-
-function getVoices() {
-  return new Promise(resolve => {
-    const v = window.speechSynthesis.getVoices();
-    if (v.length > 0) { resolve(v); return; }
-    window.speechSynthesis.onvoiceschanged = () => resolve(window.speechSynthesis.getVoices());
-  });
-}
-
-async function speakLanguage(text, bcp47, gender) {
-  window.speechSynthesis.cancel();
-  const utterance = new SpeechSynthesisUtterance(text);
-  utterance.lang = bcp47;
-  utterance.rate = 0.88;
-  utterance.pitch = gender === 'female' ? 1.15 : 0.82;
-  utterance.volume = 1;
-  const voices = await getVoices();
-  const prefix = bcp47.split('-')[0];
-  const matching = voices.filter(v => v.lang.startsWith(prefix));
-  if (matching.length > 0) utterance.voice = matching[Math.floor(Math.random() * matching.length)];
-  window.speechSynthesis.speak(utterance);
-}
+let languageAudio = null;
 
 document.getElementById('btn-replay-audio').addEventListener('click', () => {
-  speakLanguage(currentSentenceText, currentLangBcp47, currentGender);
+  if (!languageAudio) return;
+  languageAudio.currentTime = 0;
+  languageAudio.play();
 });
 
 // Load map data once
@@ -384,7 +362,7 @@ socket.on('startError', ({ message }) => {
   $lobbyError.textContent = message; $lobbyError.classList.remove('hidden');
 });
 
-socket.on('roundStart', ({ round, totalRounds, gameMode, countryId, flagAlpha2, sentenceText, langBcp47, gender, timeLimit }) => {
+socket.on('roundStart', ({ round, totalRounds, gameMode, countryId, flagAlpha2, audioUrl, timeLimit }) => {
   if (!inRoom) return;
 
   currentGameMode = gameMode;
@@ -419,11 +397,12 @@ socket.on('roundStart', ({ round, totalRounds, gameMode, countryId, flagAlpha2, 
     document.getElementById('guess-prompt').textContent = 'What country is this?';
   } else if (gameMode === 'language') {
     $displayLanguage.classList.remove('hidden');
-    currentSentenceText = sentenceText;
-    currentLangBcp47    = langBcp47;
-    currentGender       = gender;
     document.getElementById('guess-prompt').textContent = 'What language is this?';
-    setTimeout(() => speakLanguage(sentenceText, langBcp47, gender), 400);
+    languageAudio = null;
+    if (audioUrl) {
+      languageAudio = new Audio(audioUrl);
+      languageAudio.play().catch(() => {});
+    }
   } else {
     $displayOutline.classList.remove('hidden');
     renderCountry(countryId);
@@ -466,7 +445,7 @@ socket.on('roundEnd', ({ correctAnswer, scores, playerResults, round, totalRound
   roundActive = false;
   clearInterval(timerInterval);
   setGuessState(true);
-  window.speechSynthesis && window.speechSynthesis.cancel();
+  if (languageAudio) { languageAudio.pause(); languageAudio.currentTime = 0; }
 
   renderScores(scores);
   $overlayCountry.textContent = correctAnswer;
