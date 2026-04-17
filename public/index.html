@@ -62,6 +62,17 @@
         <h2>Players <span id="player-count">(0/8)</span></h2>
         <ul id="player-list" class="player-list"></ul>
 
+        <!-- Win score selector — host only, flag/language modes -->
+        <div id="lobby-win-score-selector" class="lobby-win-score-selector hidden">
+          <p class="mode-select-label">Points to Win</p>
+          <div class="win-score-row">
+            <button class="win-score-btn selected" data-score="25">25</button>
+            <button class="win-score-btn" data-score="50">50</button>
+            <button class="win-score-btn" data-score="75">75</button>
+            <button class="win-score-btn" data-score="100">100</button>
+          </div>
+        </div>
+
         <!-- Mode picker — host only -->
         <div id="lobby-mode-selector" class="lobby-mode-selector hidden">
           <p class="mode-select-label">Game Mode</p>

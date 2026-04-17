@@ -74,6 +74,13 @@ input[type="text"]:focus { border-color: var(--accent); }
 .join-row { display: flex; gap: 8px; }
 .join-row input { flex: 1; text-transform: uppercase; letter-spacing: 2px; }
 
+/* ════════════════ LOBBY WIN SCORE ════════════════ */
+.lobby-win-score-selector { display: flex; flex-direction: column; gap: 8px; }
+.win-score-row { display: flex; gap: 8px; }
+.win-score-btn { flex: 1; padding: 10px 0; background: var(--surface2); border: 2px solid var(--border); border-radius: 8px; color: var(--text); font-size: 1rem; font-weight: 700; cursor: pointer; transition: border-color 0.15s; }
+.win-score-btn:hover { border-color: var(--text-muted); }
+.win-score-btn.selected { border-color: var(--accent); background: rgba(88,166,255,0.08); color: var(--accent); }
+
 /* ════════════════ LOBBY MODE PICKER ════════════════ */
 .lobby-mode-selector { display: flex; flex-direction: column; gap: 8px; }
 .mode-select-label { font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); }

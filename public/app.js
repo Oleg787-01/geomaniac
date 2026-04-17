@@ -8,6 +8,7 @@ let isHost         = false;
 let myId           = null;
 let inRoom         = false;
 let currentGameMode = 'outline';
+let currentWinScore = 25;
 let worldData       = null;
 let countriesData   = [];
 let timerInterval   = null;
@@ -101,7 +102,21 @@ const $playerCount  = document.getElementById('player-count');
 const $hostControls = document.getElementById('lobby-host-controls');
 const $lobbyWaiting = document.getElementById('lobby-waiting');
 const $lobbyError   = document.getElementById('lobby-error');
-const $modeSelector = document.getElementById('lobby-mode-selector');
+const $modeSelector      = document.getElementById('lobby-mode-selector');
+const $winScoreSelector  = document.getElementById('lobby-win-score-selector');
+
+function updateWinScoreSelector(score) {
+  document.querySelectorAll('.win-score-btn').forEach(btn => {
+    btn.classList.toggle('selected', Number(btn.dataset.score) === score);
+  });
+}
+
+document.querySelectorAll('.win-score-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    if (!isHost) return;
+    socket.emit('changeWinScore', { winScore: Number(btn.dataset.score) });
+  });
+});
 
 document.getElementById('btn-copy-code').addEventListener('click', () => {
   navigator.clipboard.writeText(myRoomCode).then(() => {
@@ -145,10 +160,14 @@ function renderPlayerList(players) {
   });
 }
 
-function setLobbyMode(mode) {
+function setLobbyMode(mode, winScore) {
+  winScore = winScore || currentWinScore;
   const labels = { outline: 'Outline Guess', flag: 'Guess the Flag', language: 'Guess the Language' };
   document.getElementById('lobby-mode-label').textContent = labels[mode] || mode;
   updateModePicker(mode);
+  updateWinScoreSelector(winScore);
+  const needsWinScore = mode === 'flag' || mode === 'language';
+  if (isHost) $winScoreSelector.classList.toggle('hidden', !needsWinScore);
   const box = document.getElementById('lobby-rules-box');
   if (mode === 'flag') {
     box.innerHTML = `<h3>Guess the Flag</h3><ul class="rules-list">
@@ -157,7 +176,7 @@ function setLobbyMode(mode) {
       <li>First correct (by submission time): <strong>+7 pts</strong></li>
       <li>Other correct answers: <strong>+5 pts</strong></li>
       <li>Wrong guess: <strong>−2 pts</strong> &nbsp;·&nbsp; No answer: <strong>0 pts</strong></li>
-      <li>First player to reach <strong>25 points wins!</strong></li>
+      <li>First player to reach <strong>${winScore} points wins!</strong></li>
     </ul>`;
   } else if (mode === 'language') {
     box.innerHTML = `<h3>Guess the Language</h3><ul class="rules-list">
@@ -166,9 +185,10 @@ function setLobbyMode(mode) {
       <li>Answer within <strong>10–20 seconds</strong>: +3 pts (or +5 if first)</li>
       <li>Answer in <strong>last 10 seconds</strong>: +2 pts (or +4 if first)</li>
       <li>Wrong guess: <strong>−2 pts</strong> &nbsp;·&nbsp; No answer: <strong>0 pts</strong></li>
-      <li>First player to reach <strong>25 points wins!</strong></li>
+      <li>First player to reach <strong>${winScore} points wins!</strong></li>
     </ul>`;
   } else {
+    $winScoreSelector.classList.add('hidden');
     box.innerHTML = `<h3>Outline Guess</h3><ul class="rules-list">
       <li>A country silhouette is shown — one guess per round</li>
       <li>First correct: <strong>+7 pts</strong> &nbsp;·&nbsp; Other correct: <strong>+5 pts</strong></li>
@@ -177,10 +197,11 @@ function setLobbyMode(mode) {
   }
 }
 
-function showLobby(players, gameMode, asHost) {
+function showLobby(players, gameMode, winScore, asHost) {
   currentGameMode = gameMode || 'outline';
+  currentWinScore = winScore || 25;
   renderPlayerList(players);
-  setLobbyMode(currentGameMode);
+  setLobbyMode(currentGameMode, currentWinScore);
   if (asHost) {
     $hostControls.classList.remove('hidden');
     $lobbyWaiting.classList.add('hidden');
@@ -329,16 +350,16 @@ document.getElementById('btn-play-again').addEventListener('click', () => socket
 // ════ SOCKET EVENTS ════
 socket.on('connect', () => { myId = socket.id; });
 
-socket.on('roomCreated', ({ code, players, gameMode }) => {
+socket.on('roomCreated', ({ code, players, gameMode, winScore }) => {
   myRoomCode = code; isHost = true; inRoom = true;
   $displayCode.textContent = code;
-  showLobby(players, gameMode, true);
+  showLobby(players, gameMode, winScore, true);
 });
 
-socket.on('roomJoined', ({ code, players, gameMode }) => {
+socket.on('roomJoined', ({ code, players, gameMode, winScore }) => {
   myRoomCode = code; isHost = false; inRoom = true;
   $displayCode.textContent = code;
-  showLobby(players, gameMode, false);
+  showLobby(players, gameMode, winScore, false);
 });
 
 socket.on('joinError', ({ message }) => showRoomError(message));
@@ -350,22 +371,34 @@ socket.on('newHost', ({ hostId }) => {
     $hostControls.classList.remove('hidden');
     $lobbyWaiting.classList.add('hidden');
     $modeSelector.classList.remove('hidden');
+    const needsWinScore = currentGameMode === 'flag' || currentGameMode === 'language';
+    $winScoreSelector.classList.toggle('hidden', !needsWinScore);
   }
 });
 
-socket.on('gameModeChanged', ({ gameMode }) => {
+socket.on('gameModeChanged', ({ gameMode, winScore }) => {
   currentGameMode = gameMode;
-  setLobbyMode(gameMode);
+  currentWinScore = winScore;
+  setLobbyMode(gameMode, winScore);
+});
+
+socket.on('winScoreChanged', ({ winScore }) => {
+  currentWinScore = winScore;
+  setLobbyMode(currentGameMode, winScore);
 });
 
 socket.on('startError', ({ message }) => {
   $lobbyError.textContent = message; $lobbyError.classList.remove('hidden');
 });
 
-socket.on('roundStart', ({ round, totalRounds, gameMode, countryId, flagAlpha2, audioUrl, timeLimit }) => {
+let _countdownInterval = null;
+
+socket.on('roundStart', ({ round, totalRounds, gameMode, countryId, flagAlpha2, audioUrl, timeLimit, winScore }) => {
   if (!inRoom) return;
 
+  clearInterval(_countdownInterval);
   currentGameMode = gameMode;
+  if (winScore) currentWinScore = winScore;
   hasSubmitted    = false;
   roundActive     = true;
 
@@ -378,9 +411,11 @@ socket.on('roundStart', ({ round, totalRounds, gameMode, countryId, flagAlpha2, 
 
   if (gameMode === 'flag') {
     $roundInfoText.textContent = `Flag Mode · Round ${round}`;
+    $winTarget.textContent = `First to ${winScore || currentWinScore} pts`;
     $winTarget.classList.remove('hidden');
   } else if (gameMode === 'language') {
     $roundInfoText.textContent = `Language Mode · Round ${round}`;
+    $winTarget.textContent = `First to ${winScore || currentWinScore} pts`;
     $winTarget.classList.remove('hidden');
   } else {
     $roundInfoText.textContent = `Round ${round} / ${totalRounds}`;
@@ -483,8 +518,19 @@ socket.on('roundEnd', ({ correctAnswer, scores, playerResults, round, totalRound
   }
 
   const isLast = (gameMode === 'outline' && round >= totalRounds);
-  $overlayNextText.textContent = isLast ? 'Calculating final scores...' : 'Next round in 4s...';
   $roundOverlay.classList.remove('hidden');
+  clearInterval(_countdownInterval);
+  if (isLast) {
+    $overlayNextText.textContent = 'Calculating final scores...';
+  } else {
+    let secs = 4;
+    $overlayNextText.textContent = `Next round in ${secs}s...`;
+    _countdownInterval = setInterval(() => {
+      secs--;
+      if (secs <= 0) { clearInterval(_countdownInterval); $overlayNextText.textContent = 'Starting...'; }
+      else $overlayNextText.textContent = `Next round in ${secs}s...`;
+    }, 1000);
+  }
 });
 
 socket.on('gameEnd', ({ results, winner, isDraw, drawPlayers }) => {
@@ -515,10 +561,10 @@ socket.on('gameEnd', ({ results, winner, isDraw, drawPlayers }) => {
   showScreen('screen-results');
 });
 
-socket.on('backToLobby', ({ players, gameMode }) => {
+socket.on('backToLobby', ({ players, gameMode, winScore }) => {
   inRoom = true;
   $displayCode.textContent = myRoomCode;
-  showLobby(players, gameMode, isHost);
+  showLobby(players, gameMode, winScore, isHost);
 });
 
 // ════ INIT ════

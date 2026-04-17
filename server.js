@@ -113,7 +113,7 @@ async function startRound(roomCode) {
     totalRounds: room.gameMode === 'outline' ? ROUNDS_PER_GAME : null,
     gameMode: room.gameMode,
     timeLimit: ROUND_TIME_SECONDS,
-    winScore: room.gameMode === 'flag' ? FLAG_WIN_SCORE : room.gameMode === 'language' ? LANG_WIN_SCORE : null,
+    winScore: (room.gameMode === 'flag' || room.gameMode === 'language') ? room.winScore : null,
   };
 
   if (room.gameMode === 'language') {
@@ -198,9 +198,8 @@ function endRound(roomCode) {
       });
     });
 
-    flagHasWinner =
-      (room.gameMode === 'flag'     && room.players.some(p => p.score >= FLAG_WIN_SCORE)) ||
-      (room.gameMode === 'language' && room.players.some(p => p.score >= LANG_WIN_SCORE));
+    flagHasWinner = (room.gameMode === 'flag' || room.gameMode === 'language') &&
+      room.players.some(p => p.score >= room.winScore);
   } else {
     room.players.forEach(p => {
       playerResults.push({
@@ -260,6 +259,7 @@ io.on('connection', (socket) => {
       players: [{ id: socket.id, name: name.trim(), score: 0 }],
       gameState: 'lobby',
       gameMode: 'outline',
+      winScore: 25,
       currentRound: 0,
       currentCountry: null,
       currentSentence: null,
@@ -272,7 +272,7 @@ io.on('connection', (socket) => {
     };
     rooms.set(code, room);
     socket.join(code);
-    socket.emit('roomCreated', { code, players: room.players, isHost: true, gameMode: room.gameMode });
+    socket.emit('roomCreated', { code, players: room.players, isHost: true, gameMode: room.gameMode, winScore: room.winScore });
   });
 
   socket.on('joinRoom', ({ code, name }) => {
@@ -284,7 +284,7 @@ io.on('connection', (socket) => {
 
     room.players.push({ id: socket.id, name: name.trim(), score: 0 });
     socket.join(room.code);
-    socket.emit('roomJoined', { code: room.code, players: room.players, isHost: false, gameMode: room.gameMode });
+    socket.emit('roomJoined', { code: room.code, players: room.players, isHost: false, gameMode: room.gameMode, winScore: room.winScore });
     socket.to(room.code).emit('lobbyUpdate', { players: room.players });
   });
 
@@ -297,7 +297,18 @@ io.on('connection', (socket) => {
     for (const [code, room] of rooms) {
       if (room.host === socket.id && room.gameState === 'lobby') {
         room.gameMode = gameMode;
-        io.to(code).emit('gameModeChanged', { gameMode });
+        io.to(code).emit('gameModeChanged', { gameMode, winScore: room.winScore });
+        return;
+      }
+    }
+  });
+
+  socket.on('changeWinScore', ({ winScore }) => {
+    if (![25, 50, 75, 100].includes(winScore)) return;
+    for (const [code, room] of rooms) {
+      if (room.host === socket.id && room.gameState === 'lobby') {
+        room.winScore = winScore;
+        io.to(code).emit('winScoreChanged', { winScore });
         return;
       }
     }
@@ -392,7 +403,7 @@ io.on('connection', (socket) => {
         room.currentRound    = 0;
         room.usedCountryKeys = [];
         room.gameState       = 'lobby';
-        io.to(code).emit('backToLobby', { players: room.players, gameMode: room.gameMode });
+        io.to(code).emit('backToLobby', { players: room.players, gameMode: room.gameMode, winScore: room.winScore });
         return;
       }
     }
