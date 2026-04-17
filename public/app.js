@@ -247,7 +247,7 @@ document.getElementById('btn-replay-audio').addEventListener('click', () => {
 
 // Load map data once
 Promise.all([
-  fetch('https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json').then(r => r.json()),
+  fetch('https://cdn.jsdelivr.net/npm/world-atlas@2/countries-50m.json').then(r => r.json()),
   fetch('/countries.json').then(r => r.json()),
 ]).then(([topo, countries]) => {
   worldData = topo;
