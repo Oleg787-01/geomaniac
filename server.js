@@ -130,6 +130,7 @@ async function startRound(roomCode) {
       const audioFilename = await generateLanguageAudio(sentence, gender);
       if (!rooms.get(roomCode)) return;
       payload.audioUrl = `/audio/${audioFilename}`;
+      room.currentAudioUrl = payload.audioUrl;
     } catch (err) {
       console.error('TTS error:', err.message);
       if (!rooms.get(roomCode)) return;
@@ -269,6 +270,7 @@ io.on('connection', (socket) => {
       firstCorrect: null,
       roundTimer: null,
       usedCountryKeys: [],
+      currentAudioUrl: null,
     };
     rooms.set(code, room);
     socket.join(code);
@@ -278,14 +280,48 @@ io.on('connection', (socket) => {
   socket.on('joinRoom', ({ code, name }) => {
     if (!name || !name.trim()) return;
     const room = rooms.get((code || '').toUpperCase().trim());
-    if (!room)                      { socket.emit('joinError', { message: 'Room not found.' }); return; }
-    if (room.gameState !== 'lobby') { socket.emit('joinError', { message: 'Game already in progress.' }); return; }
-    if (room.players.length >= 8)   { socket.emit('joinError', { message: 'Room is full (max 8).' }); return; }
+    if (!room)                       { socket.emit('joinError', { message: 'Room not found.' }); return; }
+    if (room.gameState === 'gameEnd'){ socket.emit('joinError', { message: 'This game has already ended.' }); return; }
+    if (room.players.length >= 8)    { socket.emit('joinError', { message: 'Room is full (max 8).' }); return; }
 
     room.players.push({ id: socket.id, name: name.trim(), score: 0 });
     socket.join(room.code);
-    socket.emit('roomJoined', { code: room.code, players: room.players, isHost: false, gameMode: room.gameMode, winScore: room.winScore });
-    socket.to(room.code).emit('lobbyUpdate', { players: room.players });
+
+    if (room.gameState === 'lobby') {
+      socket.emit('roomJoined', { code: room.code, players: room.players, isHost: false, gameMode: room.gameMode, winScore: room.winScore });
+      socket.to(room.code).emit('lobbyUpdate', { players: room.players });
+    } else {
+      // Mid-game join: auto-skip this round for the new player
+      if (room.gameMode === 'flag' || room.gameMode === 'language') {
+        room.flagGuesses[socket.id] = { guess: null, correct: false, gaveUp: true, submittedAt: Date.now() };
+      } else {
+        room.roundGuesses[socket.id] = false;
+      }
+
+      const timeElapsed  = room.roundStartTime ? Math.floor((Date.now() - room.roundStartTime) / 1000) : ROUND_TIME_SECONDS;
+      const timeRemaining = Math.max(0, ROUND_TIME_SECONDS - timeElapsed);
+
+      const midPayload = {
+        code: room.code,
+        players: room.players,
+        isHost: false,
+        gameMode: room.gameMode,
+        winScore: room.winScore,
+        midGame: true,
+        gameState: room.gameState,
+        round: room.currentRound,
+        totalRounds: room.gameMode === 'outline' ? ROUNDS_PER_GAME : null,
+        timeLimit: ROUND_TIME_SECONDS,
+        timeRemaining,
+        scores: room.players.map(p => ({ id: p.id, name: p.name, score: p.score })),
+      };
+      if (room.gameMode === 'outline')  midPayload.countryId  = room.currentCountry && room.currentCountry.id;
+      if (room.gameMode === 'flag')     midPayload.flagAlpha2 = room.currentCountry && room.currentCountry.alpha2;
+      if (room.gameMode === 'language') midPayload.audioUrl   = room.currentAudioUrl;
+
+      socket.emit('roomJoined', midPayload);
+      socket.to(room.code).emit('lobbyUpdate', { players: room.players });
+    }
   });
 
   socket.on('leaveRoom', () => {
@@ -412,6 +448,11 @@ io.on('connection', (socket) => {
   socket.on('disconnect', () => {
     removePlayerFromRoom(socket.id, null);
   });
+});
+
+// Catch-all: serve index.html for any non-file route (enables room-code URLs)
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
 const PORT = process.env.PORT || 3000;

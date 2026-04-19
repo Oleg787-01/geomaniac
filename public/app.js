@@ -37,6 +37,7 @@ function goHome() {
   }
   myRoomCode = '';
   isHost = false;
+  window.history.pushState({}, '', '/');
   const saved = loadName();
   if (saved) { myName = saved; showHomeScreen(); }
   else showScreen('screen-landing');
@@ -65,7 +66,8 @@ function showHomeScreen() {
   document.getElementById('home-player-name').textContent = myName;
   const av = document.getElementById('home-avatar');
   av.textContent = initials(myName); av.style.background = avatarColor(myName);
-  document.getElementById('room-code-input').value = '';
+  document.getElementById('room-code-input').value = pendingRoomCode || '';
+  pendingRoomCode = '';
   document.getElementById('room-error').classList.add('hidden');
   showScreen('screen-home');
 }
@@ -238,6 +240,7 @@ const $displayFlag      = document.getElementById('display-flag');
 const $displayLanguage  = document.getElementById('display-language');
 
 let languageAudio = null;
+let pendingRoomCode = '';
 
 document.getElementById('btn-replay-audio').addEventListener('click', () => {
   if (!languageAudio) return;
@@ -274,15 +277,19 @@ function showFlag(alpha2) {
   $flagImg.src = `https://flagcdn.com/w640/${alpha2}.png`;
 }
 
-function startTimer(seconds) {
+function startTimerAt(current, total) {
   clearInterval(timerInterval);
-  timerTotal = seconds;
-  updateTimerDisplay(seconds);
+  timerTotal = total;
+  updateTimerDisplay(current);
   timerInterval = setInterval(() => {
-    seconds--;
-    updateTimerDisplay(seconds);
-    if (seconds <= 0) clearInterval(timerInterval);
+    current--;
+    updateTimerDisplay(current);
+    if (current <= 0) clearInterval(timerInterval);
   }, 1000);
+}
+
+function startTimer(seconds) {
+  startTimerAt(seconds, seconds);
 }
 
 function updateTimerDisplay(current) {
@@ -353,13 +360,69 @@ socket.on('connect', () => { myId = socket.id; });
 socket.on('roomCreated', ({ code, players, gameMode, winScore }) => {
   myRoomCode = code; isHost = true; inRoom = true;
   $displayCode.textContent = code;
+  window.history.pushState({}, '', '/' + code);
   showLobby(players, gameMode, winScore, true);
 });
 
-socket.on('roomJoined', ({ code, players, gameMode, winScore }) => {
+socket.on('roomJoined', ({ code, players, gameMode, winScore, midGame, gameState, round, totalRounds, timeLimit, timeRemaining, countryId, flagAlpha2, audioUrl, scores }) => {
   myRoomCode = code; isHost = false; inRoom = true;
+  currentGameMode = gameMode;
+  currentWinScore = winScore || 25;
   $displayCode.textContent = code;
-  showLobby(players, gameMode, winScore, false);
+  window.history.pushState({}, '', '/' + code);
+
+  if (midGame) {
+    // Joined while a game is in progress — auto-skipped for current round
+    hasSubmitted = true;
+    roundActive = false;
+    clearInterval(_countdownInterval);
+
+    $guessedList.innerHTML = '';
+    $guessFeedback.className = 'guess-feedback hidden';
+    $guessInput.value = '';
+    setGuessState(true);
+    $roundOverlay.classList.add('hidden');
+    $overlayResults.innerHTML = '';
+
+    if (gameMode === 'flag') {
+      $roundInfoText.textContent = `Flag Mode · Round ${round}`;
+      $winTarget.textContent = `First to ${winScore} pts`;
+      $winTarget.classList.remove('hidden');
+    } else if (gameMode === 'language') {
+      $roundInfoText.textContent = `Language Mode · Round ${round}`;
+      $winTarget.textContent = `First to ${winScore} pts`;
+      $winTarget.classList.remove('hidden');
+    } else {
+      $roundInfoText.textContent = `Round ${round} / ${totalRounds}`;
+      $winTarget.classList.add('hidden');
+    }
+
+    $displayOutline.classList.add('hidden');
+    $displayFlag.classList.add('hidden');
+    $displayLanguage.classList.add('hidden');
+
+    if (gameMode === 'flag' && flagAlpha2) {
+      $displayFlag.classList.remove('hidden');
+      showFlag(flagAlpha2);
+      document.getElementById('guess-prompt').textContent = 'What country is this?';
+    } else if (gameMode === 'language') {
+      $displayLanguage.classList.remove('hidden');
+      document.getElementById('guess-prompt').textContent = 'What language is this?';
+      languageAudio = null;
+      if (audioUrl) { languageAudio = new Audio(audioUrl); languageAudio.play().catch(() => {}); }
+    } else if (countryId) {
+      $displayOutline.classList.remove('hidden');
+      renderCountry(countryId);
+      document.getElementById('guess-prompt').textContent = 'What country is this?';
+    }
+
+    if (scores) renderScores(scores);
+    showFeedback("You joined mid-round — next round you're in!", 'gave-up');
+    if (gameState === 'playing' && timeRemaining > 0) startTimerAt(timeRemaining, timeLimit || 30);
+    showScreen('screen-game');
+  } else {
+    showLobby(players, gameMode, winScore, false);
+  }
 });
 
 socket.on('joinError', ({ message }) => showRoomError(message));
@@ -446,6 +509,7 @@ socket.on('roundStart', ({ round, totalRounds, gameMode, countryId, flagAlpha2, 
 
   startTimer(timeLimit);
   showScreen('screen-game');
+  setTimeout(() => $guessInput.focus(), 50);
 });
 
 socket.on('guessResult', ({ correct, points, isFirst, gaveUp, totalScore }) => {
@@ -535,7 +599,6 @@ socket.on('roundEnd', ({ correctAnswer, scores, playerResults, round, totalRound
 
 socket.on('gameEnd', ({ results, winner, isDraw, drawPlayers }) => {
   $roundOverlay.classList.add('hidden');
-  inRoom = false;
 
   if (isDraw) {
     $winnerBanner.textContent = `🤝 It's a Draw! ${drawPlayers.join(' & ')} tied with ${results[0].score} pts`;
@@ -569,6 +632,8 @@ socket.on('backToLobby', ({ players, gameMode, winScore }) => {
 
 // ════ INIT ════
 (function init() {
+  const pathCode = window.location.pathname.slice(1).toUpperCase().trim();
+  if (pathCode && /^[A-Z0-9]{6}$/.test(pathCode)) pendingRoomCode = pathCode;
   const saved = loadName();
   if (saved) { myName = saved; showHomeScreen(); }
   else showScreen('screen-landing');
