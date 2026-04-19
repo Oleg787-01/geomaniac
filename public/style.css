@@ -209,6 +209,39 @@ input[type="text"]:focus { border-color: var(--accent); }
 
 @keyframes popIn { from { opacity:0; transform:scale(0.88); } to { opacity:1; transform:scale(1); } }
 
+/* ════════════════ HOME — reworked layout ════════════════ */
+.home-content { flex: 1; display: flex; align-items: flex-start; justify-content: center; padding: 32px 24px; overflow-y: auto; }
+.home-main { display: flex; flex-direction: column; gap: 20px; width: 100%; max-width: 480px; padding-bottom: 32px; }
+.home-card { width: 100%; }
+.btn-sm { padding: 6px 14px; font-size: 0.82rem; }
+
+/* Room browser */
+.room-browser { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+.room-browser-header { display: flex; align-items: center; justify-content: space-between; padding: 14px 18px 10px; border-bottom: 1px solid var(--border); }
+.room-browser-title { font-size: 0.92rem; font-weight: 700; color: var(--text); }
+.room-browser-list { display: flex; flex-direction: column; max-height: 280px; overflow-y: auto; }
+.room-browser-empty { padding: 20px 18px; font-size: 0.88rem; color: var(--text-muted); text-align: center; }
+.room-browser-item { display: flex; align-items: center; gap: 12px; padding: 12px 18px; border-bottom: 1px solid var(--border); }
+.room-browser-item:last-child { border-bottom: none; }
+.room-browser-item:hover { background: var(--surface2); }
+.rbi-info { flex: 1; min-width: 0; }
+.rbi-name { font-size: 0.95rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.rbi-meta { font-size: 0.78rem; color: var(--text-muted); margin-top: 2px; display: flex; align-items: center; gap: 6px; }
+.rbi-state { font-size: 0.72rem; font-weight: 700; padding: 2px 7px; border-radius: 10px; }
+.rbi-state.state-lobby   { background: rgba(63,185,80,0.15);  color: var(--green); }
+.rbi-state.state-playing { background: rgba(210,153,34,0.15); color: var(--yellow); }
+.rbi-join { flex-shrink: 0; padding: 6px 14px; font-size: 0.82rem; }
+
+/* Lobby room settings */
+.lobby-room-settings { display: flex; flex-direction: column; gap: 8px; padding-bottom: 4px; border-bottom: 1px solid var(--border); margin-bottom: 4px; }
+.room-name-row { display: flex; gap: 8px; }
+.room-name-row input { flex: 1; }
+.room-name-row .btn { white-space: nowrap; }
+.privacy-row { display: flex; gap: 8px; }
+.privacy-btn { flex: 1; padding: 9px 0; background: var(--surface2); border: 2px solid var(--border); border-radius: 8px; color: var(--text); font-size: 0.9rem; font-weight: 600; cursor: pointer; transition: border-color 0.15s; }
+.privacy-btn:hover { border-color: var(--text-muted); }
+.privacy-btn.selected { border-color: var(--accent); background: rgba(88,166,255,0.08); color: var(--accent); }
+
 @media (max-width:700px) {
   .game-body { flex-direction: column; }
   .game-sidebar { width: 100%; border-left: none; border-top: 1px solid var(--border); }

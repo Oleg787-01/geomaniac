@@ -29,6 +29,44 @@ function saveName(n) { localStorage.setItem('geoManiacName', n); }
 function loadName()  { return localStorage.getItem('geoManiacName') || ''; }
 function clearName() { localStorage.removeItem('geoManiacName'); }
 
+// ── Room browser ──
+const MODE_ICONS = { outline: '🗺️', flag: '🏴', language: '🔊' };
+function fetchPublicRooms() {
+  const $list = document.getElementById('room-browser-list');
+  $list.innerHTML = '<p class="room-browser-empty">Loading...</p>';
+  fetch('/api/rooms').then(r => r.json()).then(rooms => {
+    $list.innerHTML = '';
+    if (!rooms.length) {
+      $list.innerHTML = '<p class="room-browser-empty">No public rooms right now.</p>';
+      return;
+    }
+    rooms.forEach(room => {
+      const item = document.createElement('div');
+      item.className = 'room-browser-item';
+      const stateCls = room.gameState === 'lobby' ? 'state-lobby' : 'state-playing';
+      const stateLabel = room.gameState === 'lobby' ? 'In Lobby' : 'Playing';
+      item.innerHTML = `
+        <div class="rbi-info">
+          <div class="rbi-name">${MODE_ICONS[room.gameMode] || ''} ${escapeHtml(room.roomName)}</div>
+          <div class="rbi-meta"><span class="rbi-state ${stateCls}">${stateLabel}</span> · ${room.playerCount}/8 players</div>
+        </div>
+        <button class="btn btn-secondary rbi-join" data-code="${escapeHtml(room.code)}">Join</button>
+      `;
+      item.querySelector('.rbi-join').addEventListener('click', () => {
+        document.getElementById('room-code-input').value = room.code;
+        doJoinRoom();
+      });
+      $list.appendChild(item);
+    });
+  }).catch(() => {
+    $list.innerHTML = '<p class="room-browser-empty">Could not load rooms.</p>';
+  });
+}
+
+function escapeHtml(str) {
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
 // ── Go home: leave room, go to home screen ──
 function goHome() {
   if (inRoom) {
@@ -70,7 +108,10 @@ function showHomeScreen() {
   pendingRoomCode = '';
   document.getElementById('room-error').classList.add('hidden');
   showScreen('screen-home');
+  fetchPublicRooms();
 }
+
+document.getElementById('btn-refresh-rooms').addEventListener('click', fetchPublicRooms);
 
 document.getElementById('btn-change-name').addEventListener('click', () => {
   clearName(); myName = ''; $nameInput.value = ''; $landingError.classList.add('hidden');
@@ -145,6 +186,29 @@ document.getElementById('mode-opt-language').addEventListener('click', () => {
   socket.emit('changeGameMode', { gameMode: 'language' });
 });
 
+// ── Room name & privacy (host only) ──
+function updatePrivacyButtons(isPublic) {
+  document.getElementById('btn-privacy-public').classList.toggle('selected', isPublic);
+  document.getElementById('btn-privacy-private').classList.toggle('selected', !isPublic);
+}
+
+document.getElementById('btn-save-room-name').addEventListener('click', () => {
+  const val = document.getElementById('room-name-input').value.trim();
+  if (!val || !isHost) return;
+  socket.emit('changeRoomName', { roomName: val });
+});
+document.getElementById('room-name-input').addEventListener('keydown', e => {
+  if (e.key === 'Enter') document.getElementById('btn-save-room-name').click();
+});
+document.getElementById('btn-privacy-public').addEventListener('click', () => {
+  if (!isHost) return;
+  socket.emit('changeRoomPrivacy', { isPublic: true });
+});
+document.getElementById('btn-privacy-private').addEventListener('click', () => {
+  if (!isHost) return;
+  socket.emit('changeRoomPrivacy', { isPublic: false });
+});
+
 function updateModePicker(mode) {
   document.getElementById('mode-opt-outline').classList.toggle('selected', mode === 'outline');
   document.getElementById('mode-opt-flag').classList.toggle('selected', mode === 'flag');
@@ -199,19 +263,26 @@ function setLobbyMode(mode, winScore) {
   }
 }
 
-function showLobby(players, gameMode, winScore, asHost) {
+function showLobby(players, gameMode, winScore, asHost, roomName, isPublic) {
   currentGameMode = gameMode || 'outline';
   currentWinScore = winScore || 25;
+  if (roomName !== undefined) currentRoomName = roomName;
+  if (isPublic !== undefined) currentIsPublic = isPublic;
   renderPlayerList(players);
   setLobbyMode(currentGameMode, currentWinScore);
+  const $roomSettings = document.getElementById('lobby-room-settings');
   if (asHost) {
     $hostControls.classList.remove('hidden');
     $lobbyWaiting.classList.add('hidden');
     $modeSelector.classList.remove('hidden');
+    $roomSettings.classList.remove('hidden');
+    document.getElementById('room-name-input').value = currentRoomName;
+    updatePrivacyButtons(currentIsPublic);
   } else {
     $hostControls.classList.add('hidden');
     $lobbyWaiting.classList.remove('hidden');
     $modeSelector.classList.add('hidden');
+    $roomSettings.classList.add('hidden');
   }
   $lobbyError.classList.add('hidden');
   showScreen('screen-lobby');
@@ -239,8 +310,10 @@ const $displayOutline   = document.getElementById('display-outline');
 const $displayFlag      = document.getElementById('display-flag');
 const $displayLanguage  = document.getElementById('display-language');
 
-let languageAudio = null;
+let languageAudio   = null;
 let pendingRoomCode = '';
+let currentRoomName = '';
+let currentIsPublic = true;
 
 document.getElementById('btn-replay-audio').addEventListener('click', () => {
   if (!languageAudio) return;
@@ -357,11 +430,11 @@ document.getElementById('btn-play-again').addEventListener('click', () => socket
 // ════ SOCKET EVENTS ════
 socket.on('connect', () => { myId = socket.id; });
 
-socket.on('roomCreated', ({ code, players, gameMode, winScore }) => {
+socket.on('roomCreated', ({ code, players, gameMode, winScore, roomName, isPublic }) => {
   myRoomCode = code; isHost = true; inRoom = true;
   $displayCode.textContent = code;
   window.history.pushState({}, '', '/' + code);
-  showLobby(players, gameMode, winScore, true);
+  showLobby(players, gameMode, winScore, true, roomName, isPublic);
 });
 
 socket.on('roomJoined', ({ code, players, gameMode, winScore, midGame, gameState, round, totalRounds, timeLimit, timeRemaining, countryId, flagAlpha2, audioUrl, scores }) => {
@@ -421,7 +494,7 @@ socket.on('roomJoined', ({ code, players, gameMode, winScore, midGame, gameState
     if (gameState === 'playing' && timeRemaining > 0) startTimerAt(timeRemaining, timeLimit || 30);
     showScreen('screen-game');
   } else {
-    showLobby(players, gameMode, winScore, false);
+    showLobby(players, gameMode, winScore, false, roomName, isPublic);
   }
 });
 
@@ -450,13 +523,22 @@ socket.on('winScoreChanged', ({ winScore }) => {
   setLobbyMode(currentGameMode, winScore);
 });
 
+socket.on('roomNameChanged', ({ roomName }) => {
+  currentRoomName = roomName;
+  document.getElementById('room-name-input').value = roomName;
+});
+socket.on('roomPrivacyChanged', ({ isPublic }) => {
+  currentIsPublic = isPublic;
+  updatePrivacyButtons(isPublic);
+});
+
 socket.on('startError', ({ message }) => {
   $lobbyError.textContent = message; $lobbyError.classList.remove('hidden');
 });
 
 let _countdownInterval = null;
 
-socket.on('roundStart', ({ round, totalRounds, gameMode, countryId, flagAlpha2, audioUrl, timeLimit, winScore }) => {
+socket.on('roundStart', ({ round, totalRounds, gameMode, countryId, flagAlpha2, audioUrl, timeLimit, winScore, scores }) => {
   if (!inRoom) return;
 
   clearInterval(_countdownInterval);
@@ -464,6 +546,8 @@ socket.on('roundStart', ({ round, totalRounds, gameMode, countryId, flagAlpha2, 
   if (winScore) currentWinScore = winScore;
   hasSubmitted    = false;
   roundActive     = true;
+
+  if (scores) renderScores(scores);
 
   $guessedList.innerHTML = '';
   $guessFeedback.className = 'guess-feedback hidden';
@@ -624,10 +708,10 @@ socket.on('gameEnd', ({ results, winner, isDraw, drawPlayers }) => {
   showScreen('screen-results');
 });
 
-socket.on('backToLobby', ({ players, gameMode, winScore }) => {
+socket.on('backToLobby', ({ players, gameMode, winScore, roomName, isPublic }) => {
   inRoom = true;
   $displayCode.textContent = myRoomCode;
-  showLobby(players, gameMode, winScore, isHost);
+  showLobby(players, gameMode, winScore, isHost, roomName, isPublic);
 });
 
 // ════ INIT ════

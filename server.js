@@ -114,6 +114,7 @@ async function startRound(roomCode) {
     gameMode: room.gameMode,
     timeLimit: ROUND_TIME_SECONDS,
     winScore: (room.gameMode === 'flag' || room.gameMode === 'language') ? room.winScore : null,
+    scores: room.players.map(p => ({ id: p.id, name: p.name, score: p.score })),
   };
 
   if (room.gameMode === 'language') {
@@ -261,6 +262,8 @@ io.on('connection', (socket) => {
       gameState: 'lobby',
       gameMode: 'outline',
       winScore: 25,
+      roomName: `${name.trim()}'s Room`,
+      isPublic: true,
       currentRound: 0,
       currentCountry: null,
       currentSentence: null,
@@ -274,7 +277,7 @@ io.on('connection', (socket) => {
     };
     rooms.set(code, room);
     socket.join(code);
-    socket.emit('roomCreated', { code, players: room.players, isHost: true, gameMode: room.gameMode, winScore: room.winScore });
+    socket.emit('roomCreated', { code, players: room.players, isHost: true, gameMode: room.gameMode, winScore: room.winScore, roomName: room.roomName, isPublic: room.isPublic });
   });
 
   socket.on('joinRoom', ({ code, name }) => {
@@ -288,7 +291,7 @@ io.on('connection', (socket) => {
     socket.join(room.code);
 
     if (room.gameState === 'lobby') {
-      socket.emit('roomJoined', { code: room.code, players: room.players, isHost: false, gameMode: room.gameMode, winScore: room.winScore });
+      socket.emit('roomJoined', { code: room.code, players: room.players, isHost: false, gameMode: room.gameMode, winScore: room.winScore, roomName: room.roomName, isPublic: room.isPublic });
       socket.to(room.code).emit('lobbyUpdate', { players: room.players });
     } else {
       // Mid-game join: auto-skip this round for the new player
@@ -432,6 +435,28 @@ io.on('connection', (socket) => {
     }
   });
 
+  socket.on('changeRoomName', ({ roomName }) => {
+    const name = (roomName || '').trim();
+    if (!name) return;
+    for (const [code, room] of rooms) {
+      if (room.host === socket.id) {
+        room.roomName = name;
+        io.to(code).emit('roomNameChanged', { roomName: name });
+        return;
+      }
+    }
+  });
+
+  socket.on('changeRoomPrivacy', ({ isPublic }) => {
+    for (const [code, room] of rooms) {
+      if (room.host === socket.id) {
+        room.isPublic = !!isPublic;
+        io.to(code).emit('roomPrivacyChanged', { isPublic: room.isPublic });
+        return;
+      }
+    }
+  });
+
   socket.on('playAgain', () => {
     for (const [code, room] of rooms) {
       if (room.host === socket.id && room.gameState === 'gameEnd') {
@@ -439,7 +464,7 @@ io.on('connection', (socket) => {
         room.currentRound    = 0;
         room.usedCountryKeys = [];
         room.gameState       = 'lobby';
-        io.to(code).emit('backToLobby', { players: room.players, gameMode: room.gameMode, winScore: room.winScore });
+        io.to(code).emit('backToLobby', { players: room.players, gameMode: room.gameMode, winScore: room.winScore, roomName: room.roomName, isPublic: room.isPublic });
         return;
       }
     }
@@ -448,6 +473,24 @@ io.on('connection', (socket) => {
   socket.on('disconnect', () => {
     removePlayerFromRoom(socket.id, null);
   });
+});
+
+// ── Public room browser API ──
+app.get('/api/rooms', (req, res) => {
+  const list = [];
+  for (const [code, room] of rooms) {
+    if (room.isPublic && room.gameState !== 'gameEnd') {
+      list.push({
+        code,
+        roomName: room.roomName,
+        hostName: room.players[0] ? room.players[0].name : 'Unknown',
+        playerCount: room.players.length,
+        gameMode: room.gameMode,
+        gameState: room.gameState,
+      });
+    }
+  }
+  res.json(list);
 });
 
 // Catch-all: serve index.html for any non-file route (enables room-code URLs)

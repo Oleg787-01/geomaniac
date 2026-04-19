@@ -34,14 +34,26 @@
       </div>
     </div>
     <div class="home-content">
-      <div class="card home-card">
-        <button id="btn-create-room" class="btn btn-primary btn-large">Create Room</button>
-        <div class="or-divider"><span>or</span></div>
-        <div class="join-row">
-          <input id="room-code-input" type="text" placeholder="Room code (e.g. ABC123)" maxlength="6" autocomplete="off" />
-          <button id="btn-join-room" class="btn btn-secondary">Join Room</button>
+      <div class="home-main">
+        <div class="card home-card">
+          <button id="btn-create-room" class="btn btn-primary btn-large">Create Room</button>
+          <div class="or-divider"><span>or join with code</span></div>
+          <div class="join-row">
+            <input id="room-code-input" type="text" placeholder="Room code (e.g. ABC123)" maxlength="6" autocomplete="off" />
+            <button id="btn-join-room" class="btn btn-secondary">Join</button>
+          </div>
+          <p id="room-error" class="error-msg hidden"></p>
         </div>
-        <p id="room-error" class="error-msg hidden"></p>
+
+        <div class="room-browser">
+          <div class="room-browser-header">
+            <span class="room-browser-title">🌐 Public Rooms</span>
+            <button id="btn-refresh-rooms" class="btn btn-ghost btn-sm">↻ Refresh</button>
+          </div>
+          <div id="room-browser-list" class="room-browser-list">
+            <p class="room-browser-empty">No public rooms right now.</p>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -61,6 +73,20 @@
       <div class="card">
         <h2>Players <span id="player-count">(0/8)</span></h2>
         <ul id="player-list" class="player-list"></ul>
+
+        <!-- Room settings — host only -->
+        <div id="lobby-room-settings" class="lobby-room-settings hidden">
+          <p class="mode-select-label">Room Name</p>
+          <div class="room-name-row">
+            <input id="room-name-input" type="text" placeholder="Room name..." maxlength="30" autocomplete="off" />
+            <button id="btn-save-room-name" class="btn btn-secondary">Save</button>
+          </div>
+          <p class="mode-select-label" style="margin-top:4px">Visibility</p>
+          <div class="privacy-row">
+            <button class="privacy-btn selected" id="btn-privacy-public">🌐 Public</button>
+            <button class="privacy-btn" id="btn-privacy-private">🔒 Private</button>
+          </div>
+        </div>
 
         <!-- Win score selector — host only, flag/language modes -->
         <div id="lobby-win-score-selector" class="lobby-win-score-selector hidden">
