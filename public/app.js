@@ -20,6 +20,271 @@ const AVATAR_COLORS = ['#58a6ff','#3fb950','#d29922','#f85149','#bc8cff','#ff7b7
 function avatarColor(n) { let h=0; for(let i=0;i<n.length;i++) h=(h*31+n.charCodeAt(i))&0xffffffff; return AVATAR_COLORS[Math.abs(h)%AVATAR_COLORS.length]; }
 function initials(n)    { return n.slice(0,2).toUpperCase(); }
 
+// ══════════════════════════════════════════
+//  AVATAR SYSTEM
+// ══════════════════════════════════════════
+const SKIN_TONES   = ['#FDDCB5','#F5C5A3','#E8A87C','#C68642','#8D5524','#4A2912'];
+const HAIR_PRESETS = ['#1a0a00','#3d1c00','#8B4513','#C47833','#DAA520','#E8C575',
+                      '#F5F5DC','#AAAAAA','#CC3333','#9370DB','#3377DD','#22AA66'];
+const SHIRT_PRESETS= ['#3a7fc1','#c13a3a','#2ea852','#e07820','#8a3ac1','#c13a8a',
+                      '#3ac1c1','#c1a03a','#eeeeee','#222222','#4a7a3a','#c14030'];
+const PANTS_PRESETS= ['#2c4a7c','#1a1a2e','#5c3d2e','#3d5c3d','#4a4a4a','#7c2c2c',
+                      '#2c5a4a','#5c4a2c','#aaaaaa','#e8e8d8','#3a3a6c','#5c2c4a'];
+
+const HAIR_TYPES   = [{k:'short',l:'Short'},{k:'long',l:'Long'},{k:'curly',l:'Curly'},
+                      {k:'spiky',l:'Spiky'},{k:'afro',l:'Afro'},{k:'bald',l:'Bald'},{k:'ponytail',l:'Ponytail'}];
+const SHIRT_TYPES  = [{k:'tshirt',l:'T-Shirt'},{k:'hoodie',l:'Hoodie'},{k:'suit',l:'Suit'},
+                      {k:'polo',l:'Polo'},{k:'striped',l:'Striped'},{k:'tank',l:'Tank'}];
+const PANTS_TYPES  = [{k:'jeans',l:'Jeans'},{k:'shorts',l:'Shorts'},{k:'cargo',l:'Cargo'},
+                      {k:'suit-pants',l:'Suit'},{k:'joggers',l:'Joggers'}];
+const ACCESSORY_TYPES = [
+  {k:'none',l:'None ✕'},{k:'glasses',l:'👓 Glasses'},{k:'sunglasses',l:'🕶️ Sunglasses'},
+  {k:'funny-glasses',l:'🤡 Funny'},{k:'hat',l:'🧢 Cap'},{k:'cowboy-hat',l:'🤠 Cowboy'},
+  {k:'top-hat',l:'🎩 Top Hat'},{k:'beanie',l:'🧶 Beanie'},{k:'mustache',l:'👨 Mustache'},
+  {k:'beard',l:'🧔 Beard'},{k:'crown',l:'👑 Crown'},{k:'eyepatch',l:'🏴‍☠️ Eyepatch'},
+  {k:'dragon-mask',l:'🐉 Dragon'}
+];
+
+function shadeHex(hex, amt) {
+  const n = parseInt((hex||'#888888').replace('#',''), 16);
+  const clamp = v => Math.max(0, Math.min(255, v));
+  const r = clamp((n >> 16) + amt), g = clamp(((n >> 8) & 0xff) + amt), b = clamp((n & 0xff) + amt);
+  return '#' + ((1<<24)|(r<<16)|(g<<8)|b).toString(16).slice(1);
+}
+
+function defaultAvatar() {
+  return { skinTone:1, hairType:'short', hairColor:'#3d1c00', accessory:'none',
+           shirtType:'tshirt', shirtColor:'#3a7fc1', pantsType:'jeans', pantsColor:'#2c4a7c' };
+}
+
+// ── Hair SVG ──
+function _hair(type, color) {
+  const d = shadeHex(color, -50);
+  switch(type) {
+    case 'short':
+      return `<path d="M24 50 Q24 10 60 10 Q96 10 96 50 Q90 26 60 20 Q30 26 24 50Z" fill="${color}"/>`;
+    case 'long':
+      return `<path d="M24 50 Q24 10 60 10 Q96 10 96 50 Q90 26 60 20 Q30 26 24 50Z" fill="${color}"/>
+              <path d="M24 46 Q16 62 18 88 Q22 96 30 90 Q24 72 26 50Z" fill="${color}"/>
+              <path d="M96 46 Q104 62 102 88 Q98 96 90 90 Q96 72 94 50Z" fill="${color}"/>`;
+    case 'curly':
+      return `<circle cx="35" cy="26" r="14" fill="${color}"/>
+              <circle cx="52" cy="14" r="15" fill="${color}"/>
+              <circle cx="70" cy="14" r="15" fill="${color}"/>
+              <circle cx="85" cy="26" r="14" fill="${color}"/>
+              <rect x="24" y="28" width="72" height="22" fill="${color}"/>`;
+    case 'spiky':
+      return `<rect x="24" y="36" width="72" height="16" rx="4" fill="${color}"/>
+              <polygon points="36,38 32,10 46,34" fill="${color}"/>
+              <polygon points="52,36 52,6 63,33" fill="${color}"/>
+              <polygon points="68,36 74,8 80,33" fill="${color}"/>
+              <polygon points="82,38 88,12 91,36" fill="${color}"/>`;
+    case 'afro':
+      return ``;  /* rendered separately before head */
+    case 'bald':
+      return `<path d="M24 48 Q24 14 60 14 Q96 14 96 48 Q90 30 60 24 Q30 30 24 48Z" fill="${color}" opacity="0.18"/>`;
+    case 'ponytail':
+      return `<path d="M24 50 Q24 10 60 10 Q96 10 96 50 Q90 26 60 20 Q30 26 24 50Z" fill="${color}"/>
+              <ellipse cx="60" cy="8" rx="8" ry="6" fill="${color}"/>
+              <ellipse cx="60" cy="2" rx="5" ry="7" fill="${color}"/>`;
+    default:
+      return `<path d="M24 50 Q24 10 60 10 Q96 10 96 50 Q90 26 60 20 Q30 26 24 50Z" fill="${color}"/>`;
+  }
+}
+
+// ── Accessory SVG ──
+function _acc(type) {
+  switch(type) {
+    case 'glasses':
+      return `<rect x="33" y="52" width="22" height="14" rx="7" fill="none" stroke="#444" stroke-width="2.5"/>
+              <rect x="65" y="52" width="22" height="14" rx="7" fill="none" stroke="#444" stroke-width="2.5"/>
+              <line x1="55" y1="58" x2="65" y2="58" stroke="#444" stroke-width="2"/>
+              <line x1="18" y1="57" x2="33" y2="57" stroke="#444" stroke-width="2"/>
+              <line x1="87" y1="57" x2="102" y2="57" stroke="#444" stroke-width="2"/>`;
+    case 'sunglasses':
+      return `<rect x="32" y="51" width="24" height="15" rx="7" fill="#111827" opacity="0.92"/>
+              <rect x="64" y="51" width="24" height="15" rx="7" fill="#111827" opacity="0.92"/>
+              <line x1="56" y1="58" x2="64" y2="58" stroke="#555" stroke-width="2"/>
+              <line x1="18" y1="57" x2="32" y2="57" stroke="#555" stroke-width="2"/>
+              <line x1="88" y1="57" x2="102" y2="57" stroke="#555" stroke-width="2"/>`;
+    case 'funny-glasses':
+      return `<polygon points="44,46 33,53 33,67 55,67 55,53" fill="none" stroke="#e83a3a" stroke-width="2.5"/>
+              <polygon points="76,46 65,53 65,67 87,67 87,53" fill="none" stroke="#3a8ae8" stroke-width="2.5"/>
+              <line x1="55" y1="59" x2="65" y2="59" stroke="#888" stroke-width="2"/>`;
+    case 'hat':
+      return `<ellipse cx="60" cy="36" rx="42" ry="7" fill="#1a1a2e"/>
+              <rect x="26" y="8" width="68" height="30" rx="8" fill="#1a1a2e"/>
+              <ellipse cx="60" cy="38" rx="42" ry="6" fill="#252540"/>
+              <rect x="28" y="32" width="64" height="5" rx="2" fill="#4a4a7a" opacity="0.6"/>`;
+    case 'cowboy-hat':
+      return `<ellipse cx="60" cy="42" rx="52" ry="9" fill="#6B3410"/>
+              <path d="M28 42 Q26 20 40 13 Q60 7 80 13 Q94 20 92 42Z" fill="#8B4513"/>
+              <ellipse cx="60" cy="43" rx="52" ry="8" fill="#7a3c14"/>
+              <path d="M34 36 Q60 30 86 36" stroke="#c47833" stroke-width="3" fill="none" opacity="0.55"/>`;
+    case 'top-hat':
+      return `<ellipse cx="60" cy="34" rx="40" ry="7" fill="#111"/>
+              <rect x="28" y="-8" width="64" height="44" rx="4" fill="#1a1a1a"/>
+              <ellipse cx="60" cy="36" rx="40" ry="6" fill="#333"/>`;
+    case 'beanie':
+      return `<path d="M24 48 Q24 10 60 8 Q96 10 96 48 Q88 18 60 14 Q32 18 24 48Z" fill="#c0392b"/>
+              <rect x="22" y="44" width="76" height="12" rx="6" fill="#96281b"/>
+              <circle cx="60" cy="9" r="8" fill="#e74c3c"/>
+              <line x1="30" y1="46" x2="28" y2="14" stroke="#96281b" stroke-width="3.5" opacity="0.45"/>
+              <line x1="45" y1="46" x2="44" y2="10" stroke="#96281b" stroke-width="3.5" opacity="0.45"/>
+              <line x1="60" y1="46" x2="60" y2="10" stroke="#96281b" stroke-width="3.5" opacity="0.45"/>
+              <line x1="75" y1="46" x2="76" y2="10" stroke="#96281b" stroke-width="3.5" opacity="0.45"/>
+              <line x1="90" y1="46" x2="92" y2="14" stroke="#96281b" stroke-width="3.5" opacity="0.45"/>`;
+    case 'mustache':
+      return `<path d="M43 71 Q49 66 55 70 Q58 72 60 70 Q62 72 65 70 Q71 66 77 71 Q70 76 60 73 Q50 76 43 71Z" fill="#2c1810"/>`;
+    case 'beard':
+      return `<path d="M32 72 Q32 98 60 102 Q88 98 88 72 Q78 82 60 84 Q42 82 32 72Z" fill="#2c1810" opacity="0.9"/>`;
+    case 'crown':
+      return `<path d="M18 38 L60 22 L102 38 L94 48 L60 40 L26 48Z" fill="#FFD700"/>
+              <polygon points="18,38 28,14 38,38" fill="#FFD700"/>
+              <polygon points="50,38 60,10 70,38" fill="#FFD700"/>
+              <polygon points="82,38 92,14 102,38" fill="#FFD700"/>
+              <circle cx="28" cy="18" r="5" fill="#e74c3c"/>
+              <circle cx="60" cy="13" r="5" fill="#3498db"/>
+              <circle cx="92" cy="18" r="5" fill="#e74c3c"/>`;
+    case 'eyepatch':
+      return `<rect x="32" y="48" width="26" height="18" rx="9" fill="#1a1a1a"/>
+              <line x1="18" y1="54" x2="32" y2="56" stroke="#1a1a1a" stroke-width="3.5"/>
+              <line x1="58" y1="54" x2="72" y2="50" stroke="#1a1a1a" stroke-width="3.5"/>`;
+    case 'dragon-mask':
+      return `<path d="M22 46 L14 58 L22 64 L30 58Z" fill="#c0392b"/>
+              <path d="M98 46 L106 58 L98 64 L90 58Z" fill="#c0392b"/>
+              <path d="M22 46 Q22 88 60 94 Q98 88 98 46 Q80 58 60 60 Q40 58 22 46Z" fill="#c0392b"/>
+              <path d="M22 46 Q22 62 60 66 Q98 62 98 46 Q80 56 60 57 Q40 56 22 46Z" fill="#e74c3c"/>
+              <ellipse cx="40" cy="56" rx="9" ry="7" fill="#c0392b"/>
+              <ellipse cx="80" cy="56" rx="9" ry="7" fill="#c0392b"/>
+              <circle cx="40" cy="56" r="4" fill="#8B0000"/>
+              <circle cx="80" cy="56" r="4" fill="#8B0000"/>
+              <path d="M44 78 L50 73 L56 79 L60 73 L64 79 L70 73 L76 78" stroke="#e74c3c" stroke-width="2.5" fill="none" stroke-linecap="round"/>`;
+    default: return '';
+  }
+}
+
+// ── Shirt SVG ──
+function _shirt(type, color) {
+  const d = shadeHex(color, -45);
+  switch(type) {
+    case 'hoodie':
+      return `<path d="M34 98 L16 112 L26 124 L40 108 L40 152 L80 152 L80 108 L94 124 L104 112 L86 98 Q72 91 60 93 Q48 91 34 98Z" fill="${color}"/>
+              <path d="M44 98 Q46 112 46 124 L74 124 Q74 112 76 98" fill="${d}" opacity="0.28"/>
+              <path d="M54 94 Q60 102 66 94" stroke="${d}" stroke-width="2.2" fill="none"/>
+              <circle cx="59" cy="124" r="2.5" fill="${d}" opacity="0.5"/>
+              <circle cx="64" cy="127" r="2.5" fill="${d}" opacity="0.5"/>`;
+    case 'suit':
+      return `<path d="M34 98 L16 112 L26 124 L40 108 L40 152 L80 152 L80 108 L94 124 L104 112 L86 98 Q72 91 60 93 Q48 91 34 98Z" fill="${color}"/>
+              <path d="M44 98 L49 122 L60 118 L71 122 L76 98 Q68 108 60 109 Q52 108 44 98Z" fill="white" opacity="0.92"/>
+              <line x1="60" y1="109" x2="60" y2="152" stroke="${d}" stroke-width="1.5" opacity="0.35"/>`;
+    case 'polo':
+      return `<path d="M34 98 L16 112 L26 124 L40 108 L40 152 L80 152 L80 108 L94 124 L104 112 L86 98 Q72 91 60 93 Q48 91 34 98Z" fill="${color}"/>
+              <path d="M48 98 L51 116 L60 112 L69 116 L72 98 Q66 104 60 105 Q54 104 48 98Z" fill="${d}" opacity="0.3"/>
+              <rect x="57" y="105" width="6" height="2.5" rx="1" fill="${d}" opacity="0.5"/>
+              <rect x="57" y="110" width="6" height="2.5" rx="1" fill="${d}" opacity="0.5"/>`;
+    case 'striped':
+      return `<path d="M34 98 L16 112 L26 124 L40 108 L40 152 L80 152 L80 108 L94 124 L104 112 L86 98 Q72 91 60 93 Q48 91 34 98Z" fill="${color}"/>
+              <rect x="40" y="108" width="40" height="8" fill="${d}" opacity="0.28"/>
+              <rect x="40" y="124" width="40" height="8" fill="${d}" opacity="0.28"/>
+              <rect x="40" y="140" width="40" height="8" fill="${d}" opacity="0.28"/>`;
+    case 'tank':
+      return `<path d="M42 98 L38 108 L40 152 L80 152 L82 108 L78 98 Q68 91 60 93 Q52 91 42 98Z" fill="${color}"/>
+              <path d="M48 98 Q50 106 60 106 Q70 106 72 98" stroke="${d}" stroke-width="1.5" fill="none" opacity="0.4"/>`;
+    default: /* tshirt */
+      return `<path d="M34 98 L16 112 L26 124 L40 108 L40 152 L80 152 L80 108 L94 124 L104 112 L86 98 Q72 91 60 93 Q48 91 34 98Z" fill="${color}"/>
+              <path d="M40 98 Q48 106 60 106 Q72 106 80 98" stroke="${d}" stroke-width="1.2" fill="none" opacity="0.4"/>`;
+  }
+}
+
+// ── Pants SVG ──
+function _pants(type, color) {
+  const d = shadeHex(color, -35);
+  switch(type) {
+    case 'shorts':
+      return `<rect x="31" y="144" width="58" height="10" rx="3" fill="${d}"/>
+              <rect x="32" y="150" width="25" height="24" rx="5" fill="${color}"/>
+              <rect x="63" y="150" width="25" height="24" rx="5" fill="${color}"/>`;
+    case 'cargo':
+      return `<rect x="31" y="144" width="58" height="10" rx="3" fill="${d}"/>
+              <rect x="32" y="150" width="25" height="35" rx="5" fill="${color}"/>
+              <rect x="63" y="150" width="25" height="35" rx="5" fill="${color}"/>
+              <rect x="33" y="162" width="20" height="15" rx="3" fill="${d}" opacity="0.35"/>
+              <rect x="67" y="162" width="20" height="15" rx="3" fill="${d}" opacity="0.35"/>
+              <line x1="38" y1="168" x2="48" y2="168" stroke="${d}" stroke-width="2" opacity="0.55"/>
+              <line x1="72" y1="168" x2="82" y2="168" stroke="${d}" stroke-width="2" opacity="0.55"/>`;
+    case 'suit-pants':
+      return `<rect x="31" y="144" width="58" height="8" rx="3" fill="${d}"/>
+              <rect x="32" y="149" width="25" height="36" rx="5" fill="${color}"/>
+              <rect x="63" y="149" width="25" height="36" rx="5" fill="${color}"/>
+              <line x1="44" y1="150" x2="44" y2="185" stroke="${d}" stroke-width="1.5" opacity="0.4"/>
+              <line x1="76" y1="150" x2="76" y2="185" stroke="${d}" stroke-width="1.5" opacity="0.4"/>`;
+    case 'joggers':
+      return `<rect x="31" y="144" width="58" height="10" rx="5" fill="${d}"/>
+              <rect x="32" y="150" width="25" height="35" rx="8" fill="${color}"/>
+              <rect x="63" y="150" width="25" height="35" rx="8" fill="${color}"/>
+              <rect x="32" y="178" width="25" height="7" rx="3" fill="${d}" opacity="0.4"/>
+              <rect x="63" y="178" width="25" height="7" rx="3" fill="${d}" opacity="0.4"/>`;
+    default: /* jeans */
+      return `<rect x="31" y="144" width="58" height="10" rx="3" fill="${d}"/>
+              <rect x="32" y="150" width="25" height="35" rx="5" fill="${color}"/>
+              <rect x="63" y="150" width="25" height="35" rx="5" fill="${color}"/>
+              <line x1="32" y1="158" x2="57" y2="158" stroke="${d}" stroke-width="1.2" opacity="0.4"/>
+              <line x1="63" y1="158" x2="88" y2="158" stroke="${d}" stroke-width="1.2" opacity="0.4"/>`;
+  }
+}
+
+// ── Master SVG renderer ──
+function renderAvatarSVG(av, { headOnly = false } = {}) {
+  av = av || defaultAvatar();
+  const skin = SKIN_TONES[av.skinTone ?? 1] || SKIN_TONES[1];
+  const sd   = shadeHex(skin, -28);
+  const hair = av.hairColor || '#3d1c00';
+
+  const parts = [];
+
+  if (!headOnly) {
+    parts.push(_pants(av.pantsType, av.pantsColor || '#2c4a7c'));
+    parts.push(_shirt(av.shirtType, av.shirtColor || '#3a7fc1'));
+  }
+
+  // Afro goes BEHIND head
+  if (av.hairType === 'afro') {
+    parts.push(`<circle cx="60" cy="42" r="46" fill="${hair}"/>`);
+  }
+
+  // Head
+  parts.push(`
+    <ellipse cx="24" cy="57" rx="8" ry="10" fill="${skin}"/>
+    <ellipse cx="96" cy="57" rx="8" ry="10" fill="${skin}"/>
+    <ellipse cx="60" cy="55" rx="36" ry="40" fill="${skin}"/>
+    <rect x="50" y="88" width="20" height="14" rx="4" fill="${skin}"/>
+  `);
+
+  // Face features
+  parts.push(`
+    <ellipse cx="45" cy="58" rx="7" ry="6" fill="white"/>
+    <circle cx="46" cy="59" r="4" fill="#1a0a00"/>
+    <circle cx="47.5" cy="57.5" r="1.5" fill="white"/>
+    <ellipse cx="75" cy="58" rx="7" ry="6" fill="white"/>
+    <circle cx="74" cy="59" r="4" fill="#1a0a00"/>
+    <circle cx="75.5" cy="57.5" r="1.5" fill="white"/>
+    <path d="M55 68 Q60 75 65 68" stroke="${sd}" stroke-width="1.8" fill="none" stroke-linecap="round" opacity="0.65"/>
+    <path d="M48 77 Q60 87 72 77" stroke="#b06060" stroke-width="2.2" fill="none" stroke-linecap="round"/>
+  `);
+
+  // Hair on top (non-afro)
+  if (av.hairType !== 'afro') {
+    parts.push(_hair(av.hairType || 'short', hair));
+  }
+
+  // Accessory
+  parts.push(_acc(av.accessory || 'none'));
+
+  const vb = headOnly ? '12 8 96 96' : '0 0 120 185';
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${vb}">${parts.join('')}</svg>`;
+}
+
 function showScreen(id) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   document.getElementById(id).classList.add('active');
@@ -67,6 +332,140 @@ function escapeHtml(str) {
   return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
+// ══════════════════════════════════════════
+//  AVATAR CREATOR UI
+// ══════════════════════════════════════════
+function saveAvatar(av) { localStorage.setItem('geoManiacAvatar', JSON.stringify(av)); }
+function loadAvatar()   {
+  try { const s = localStorage.getItem('geoManiacAvatar'); return s ? JSON.parse(s) : null; } catch { return null; }
+}
+
+function updateAvatarPreview() {
+  document.getElementById('avatar-preview').innerHTML = renderAvatarSVG(currentAvatar);
+}
+
+function makeTypeGrid(containerId, options, currentKey, onChange) {
+  const el = document.getElementById(containerId);
+  if (!el) return;
+  el.innerHTML = '';
+  options.forEach(opt => {
+    const btn = document.createElement('button');
+    btn.className = 'type-btn' + (opt.k === currentKey ? ' selected' : '');
+    btn.textContent = opt.l;
+    btn.addEventListener('click', () => {
+      el.querySelectorAll('.type-btn').forEach(b => b.classList.remove('selected'));
+      btn.classList.add('selected');
+      onChange(opt.k);
+      updateAvatarPreview();
+    });
+    el.appendChild(btn);
+  });
+}
+
+function makeSwatchGrid(containerId, colors, currentColor, onChange) {
+  const el = document.getElementById(containerId);
+  if (!el) return;
+  el.innerHTML = '';
+  colors.forEach(c => {
+    const sw = document.createElement('button');
+    sw.className = 'color-swatch' + (c === currentColor ? ' selected' : '');
+    sw.style.background = c;
+    sw.title = c;
+    sw.addEventListener('click', () => {
+      el.querySelectorAll('.color-swatch').forEach(s => s.classList.remove('selected'));
+      sw.classList.add('selected');
+      onChange(c);
+      updateAvatarPreview();
+    });
+    el.appendChild(sw);
+  });
+}
+
+function makeSkinGrid(containerId, currentIdx, onChange) {
+  const el = document.getElementById(containerId);
+  if (!el) return;
+  el.innerHTML = '';
+  SKIN_TONES.forEach((c, i) => {
+    const sw = document.createElement('button');
+    sw.className = 'color-swatch skin-swatch' + (i === currentIdx ? ' selected' : '');
+    sw.style.background = c;
+    sw.title = 'Tone ' + (i+1);
+    sw.addEventListener('click', () => {
+      el.querySelectorAll('.color-swatch').forEach(s => s.classList.remove('selected'));
+      sw.classList.add('selected');
+      onChange(i);
+      updateAvatarPreview();
+    });
+    el.appendChild(sw);
+  });
+}
+
+function setupAvatarCreator() {
+  // Tabs
+  document.querySelectorAll('.avatar-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      document.querySelectorAll('.avatar-tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.avatar-tab-pane').forEach(p => p.classList.remove('active'));
+      tab.classList.add('active');
+      document.getElementById('tab-' + tab.dataset.tab).classList.add('active');
+    });
+  });
+
+  // Skin
+  makeSkinGrid('skin-swatches', currentAvatar.skinTone, v => { currentAvatar.skinTone = v; saveAvatar(currentAvatar); });
+
+  // Hair
+  makeTypeGrid('hair-type-btns', HAIR_TYPES, currentAvatar.hairType, v => { currentAvatar.hairType = v; saveAvatar(currentAvatar); });
+  makeSwatchGrid('hair-swatches', HAIR_PRESETS, currentAvatar.hairColor, v => { currentAvatar.hairColor = v; saveAvatar(currentAvatar); });
+
+  // Accessories
+  makeTypeGrid('accessory-btns', ACCESSORY_TYPES, currentAvatar.accessory, v => { currentAvatar.accessory = v; saveAvatar(currentAvatar); });
+
+  // Shirt
+  makeTypeGrid('shirt-type-btns', SHIRT_TYPES, currentAvatar.shirtType, v => { currentAvatar.shirtType = v; saveAvatar(currentAvatar); });
+  makeSwatchGrid('shirt-swatches', SHIRT_PRESETS, currentAvatar.shirtColor, v => { currentAvatar.shirtColor = v; saveAvatar(currentAvatar); });
+
+  // Pants
+  makeTypeGrid('pants-type-btns', PANTS_TYPES, currentAvatar.pantsType, v => { currentAvatar.pantsType = v; saveAvatar(currentAvatar); });
+  makeSwatchGrid('pants-swatches', PANTS_PRESETS, currentAvatar.pantsColor, v => { currentAvatar.pantsColor = v; saveAvatar(currentAvatar); });
+
+  // Done button
+  document.getElementById('btn-avatar-done').addEventListener('click', () => {
+    saveAvatar(currentAvatar);
+    showHomeScreen();
+  });
+}
+
+// ── Lobby avatar panel ──
+function renderLobbyAvatarPanel(players, hostId) {
+  const panel = document.getElementById('lobby-avatars-panel');
+  if (!panel) return;
+  panel.innerHTML = '';
+  players.forEach(p => {
+    const card = document.createElement('div');
+    card.className = 'lobby-avatar-card';
+    card.innerHTML = renderAvatarSVG(p.avatar || null);
+    const nameEl = document.createElement('div');
+    nameEl.className = 'lac-name';
+    nameEl.textContent = p.name;
+    if (p.id === hostId) {
+      const hEl = document.createElement('div');
+      hEl.className = 'lac-host';
+      hEl.textContent = '★ Host';
+      card.appendChild(hEl);
+    }
+    card.appendChild(nameEl);
+    panel.appendChild(card);
+  });
+}
+
+// ── Update name chip to show face SVG ──
+function updateHomeChip() {
+  const chipAv = document.getElementById('home-avatar');
+  chipAv.innerHTML = renderAvatarSVG(currentAvatar, { headOnly: true });
+  chipAv.style.cssText = 'background:none;width:36px;height:36px;';
+}
+
 // ── Go home: leave room, go to home screen ──
 function goHome() {
   if (inRoom) {
@@ -96,14 +495,21 @@ $nameInput.addEventListener('keydown', e => { if (e.key === 'Enter') doLandingCo
 function doLandingContinue() {
   const name = $nameInput.value.trim();
   if (!name) { $landingError.textContent = 'Please enter your name.'; $landingError.classList.remove('hidden'); return; }
-  myName = name; saveName(name); showHomeScreen();
+  myName = name; saveName(name);
+  // Go to avatar creator (first time) or straight to home (returning player)
+  showAvatarScreen();
+}
+
+function showAvatarScreen() {
+  document.getElementById('avatar-preview-name').textContent = myName;
+  updateAvatarPreview();
+  showScreen('screen-avatar');
 }
 
 // ════ HOME ════
 function showHomeScreen() {
   document.getElementById('home-player-name').textContent = myName;
-  const av = document.getElementById('home-avatar');
-  av.textContent = initials(myName); av.style.background = avatarColor(myName);
+  updateHomeChip();
   document.getElementById('room-code-input').value = pendingRoomCode || '';
   pendingRoomCode = '';
   document.getElementById('room-error').classList.add('hidden');
@@ -118,6 +524,10 @@ document.getElementById('btn-change-name').addEventListener('click', () => {
   showScreen('screen-landing');
 });
 
+// Avatar icon in chip → opens avatar editor
+document.getElementById('home-avatar').style.cursor = 'pointer';
+document.getElementById('home-avatar').addEventListener('click', () => showAvatarScreen());
+
 // ════ CREATE / JOIN ════
 const $roomCodeInput = document.getElementById('room-code-input');
 const $roomError     = document.getElementById('room-error');
@@ -126,7 +536,7 @@ function showRoomError(msg) { $roomError.textContent = msg; $roomError.classList
 
 document.getElementById('btn-create-room').addEventListener('click', () => {
   $roomError.classList.add('hidden');
-  socket.emit('createRoom', { name: myName });
+  socket.emit('createRoom', { name: myName, avatar: currentAvatar });
 });
 document.getElementById('btn-join-room').addEventListener('click', doJoinRoom);
 $roomCodeInput.addEventListener('keydown', e => { if (e.key === 'Enter') doJoinRoom(); });
@@ -135,7 +545,7 @@ function doJoinRoom() {
   const code = $roomCodeInput.value.trim().toUpperCase();
   if (!code) { showRoomError('Enter a room code.'); return; }
   $roomError.classList.add('hidden');
-  socket.emit('joinRoom', { name: myName, code });
+  socket.emit('joinRoom', { name: myName, code, avatar: currentAvatar });
 }
 
 // ════ LOBBY ════
@@ -220,8 +630,16 @@ function renderPlayerList(players) {
   $playerCount.textContent = `(${players.length}/8)`;
   players.forEach(p => {
     const li = document.createElement('li');
-    const av = document.createElement('span'); av.className = 'player-avatar'; av.textContent = initials(p.name); av.style.background = avatarColor(p.name);
-    li.appendChild(av); li.appendChild(document.createTextNode(p.name));
+    const av = document.createElement('span');
+    av.className = 'player-avatar';
+    if (p.avatar) {
+      av.innerHTML = renderAvatarSVG(p.avatar, { headOnly: true });
+      av.style.cssText = 'background:none;width:28px;height:28px;flex-shrink:0;';
+    } else {
+      av.textContent = initials(p.name); av.style.background = avatarColor(p.name);
+    }
+    li.appendChild(av);
+    li.appendChild(document.createTextNode(p.name));
     $playerList.appendChild(li);
   });
 }
@@ -268,7 +686,9 @@ function showLobby(players, gameMode, winScore, asHost, roomName, isPublic) {
   currentWinScore = winScore || 25;
   if (roomName !== undefined) currentRoomName = roomName;
   if (isPublic !== undefined) currentIsPublic = isPublic;
+  currentPlayers = players;
   renderPlayerList(players);
+  renderLobbyAvatarPanel(players, currentHostId);
   setLobbyMode(currentGameMode, currentWinScore);
   const $roomSettings = document.getElementById('lobby-room-settings');
   if (asHost) {
@@ -314,6 +734,9 @@ let languageAudio   = null;
 let pendingRoomCode = '';
 let currentRoomName = '';
 let currentIsPublic = true;
+let currentHostId   = null;
+let currentAvatar   = defaultAvatar();
+let currentPlayers  = [];  // full player list with avatars
 
 document.getElementById('btn-replay-audio').addEventListener('click', () => {
   if (!languageAudio) return;
@@ -430,15 +853,15 @@ document.getElementById('btn-play-again').addEventListener('click', () => socket
 // ════ SOCKET EVENTS ════
 socket.on('connect', () => { myId = socket.id; });
 
-socket.on('roomCreated', ({ code, players, gameMode, winScore, roomName, isPublic }) => {
-  myRoomCode = code; isHost = true; inRoom = true;
+socket.on('roomCreated', ({ code, players, hostId, gameMode, winScore, roomName, isPublic }) => {
+  myRoomCode = code; isHost = true; inRoom = true; currentHostId = hostId || myId;
   $displayCode.textContent = code;
   window.history.pushState({}, '', '/' + code);
   showLobby(players, gameMode, winScore, true, roomName, isPublic);
 });
 
-socket.on('roomJoined', ({ code, players, gameMode, winScore, midGame, gameState, round, totalRounds, timeLimit, timeRemaining, countryId, flagAlpha2, audioUrl, scores }) => {
-  myRoomCode = code; isHost = false; inRoom = true;
+socket.on('roomJoined', ({ code, players, hostId, gameMode, winScore, midGame, gameState, round, totalRounds, timeLimit, timeRemaining, countryId, flagAlpha2, audioUrl, scores, roomName, isPublic }) => {
+  myRoomCode = code; isHost = false; inRoom = true; currentHostId = hostId || null;
   currentGameMode = gameMode;
   currentWinScore = winScore || 25;
   $displayCode.textContent = code;
@@ -499,14 +922,24 @@ socket.on('roomJoined', ({ code, players, gameMode, winScore, midGame, gameState
 });
 
 socket.on('joinError', ({ message }) => showRoomError(message));
-socket.on('lobbyUpdate', ({ players }) => renderPlayerList(players));
+socket.on('lobbyUpdate', ({ players, hostId }) => {
+  currentPlayers = players;
+  if (hostId) currentHostId = hostId;
+  renderPlayerList(players);
+  renderLobbyAvatarPanel(players, currentHostId);
+});
 
 socket.on('newHost', ({ hostId }) => {
+  currentHostId = hostId;
+  renderLobbyAvatarPanel(currentPlayers, currentHostId);
   if (hostId === socket.id) {
     isHost = true;
     $hostControls.classList.remove('hidden');
     $lobbyWaiting.classList.add('hidden');
     $modeSelector.classList.remove('hidden');
+    document.getElementById('lobby-room-settings').classList.remove('hidden');
+    document.getElementById('room-name-input').value = currentRoomName;
+    updatePrivacyButtons(currentIsPublic);
     const needsWinScore = currentGameMode === 'flag' || currentGameMode === 'language';
     $winScoreSelector.classList.toggle('hidden', !needsWinScore);
   }
@@ -708,8 +1141,9 @@ socket.on('gameEnd', ({ results, winner, isDraw, drawPlayers }) => {
   showScreen('screen-results');
 });
 
-socket.on('backToLobby', ({ players, gameMode, winScore, roomName, isPublic }) => {
+socket.on('backToLobby', ({ players, hostId, gameMode, winScore, roomName, isPublic }) => {
   inRoom = true;
+  if (hostId) currentHostId = hostId;
   $displayCode.textContent = myRoomCode;
   showLobby(players, gameMode, winScore, isHost, roomName, isPublic);
 });
@@ -718,7 +1152,18 @@ socket.on('backToLobby', ({ players, gameMode, winScore, roomName, isPublic }) =
 (function init() {
   const pathCode = window.location.pathname.slice(1).toUpperCase().trim();
   if (pathCode && /^[A-Z0-9]{6}$/.test(pathCode)) pendingRoomCode = pathCode;
+
+  // Load saved avatar
+  const savedAv = loadAvatar();
+  if (savedAv) currentAvatar = { ...defaultAvatar(), ...savedAv };
+
+  setupAvatarCreator();
+
   const saved = loadName();
-  if (saved) { myName = saved; showHomeScreen(); }
-  else showScreen('screen-landing');
+  if (saved) {
+    myName = saved;
+    showHomeScreen(); // skip avatar screen for returning players — they can click their chip to edit
+  } else {
+    showScreen('screen-landing');
+  }
 })();

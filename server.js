@@ -83,7 +83,7 @@ function removePlayerFromRoom(socketId, socketObj) {
         room.host = room.players[0].id;
         io.to(code).emit('newHost', { hostId: room.host });
       }
-      io.to(code).emit('lobbyUpdate', { players: room.players });
+      io.to(code).emit('lobbyUpdate', { players: room.players, hostId: room.host });
 
       if (room.gameState === 'playing') {
         const usesFlags = room.gameMode === 'flag' || room.gameMode === 'language';
@@ -252,13 +252,13 @@ function endGame(roomCode) {
 // ── Socket handlers ──
 io.on('connection', (socket) => {
 
-  socket.on('createRoom', ({ name }) => {
+  socket.on('createRoom', ({ name, avatar }) => {
     if (!name || !name.trim()) return;
     const code = generateRoomCode();
     const room = {
       code,
       host: socket.id,
-      players: [{ id: socket.id, name: name.trim(), score: 0 }],
+      players: [{ id: socket.id, name: name.trim(), score: 0, avatar: avatar || null }],
       gameState: 'lobby',
       gameMode: 'outline',
       winScore: 25,
@@ -277,22 +277,22 @@ io.on('connection', (socket) => {
     };
     rooms.set(code, room);
     socket.join(code);
-    socket.emit('roomCreated', { code, players: room.players, isHost: true, gameMode: room.gameMode, winScore: room.winScore, roomName: room.roomName, isPublic: room.isPublic });
+    socket.emit('roomCreated', { code, players: room.players, isHost: true, hostId: room.host, gameMode: room.gameMode, winScore: room.winScore, roomName: room.roomName, isPublic: room.isPublic });
   });
 
-  socket.on('joinRoom', ({ code, name }) => {
+  socket.on('joinRoom', ({ code, name, avatar }) => {
     if (!name || !name.trim()) return;
     const room = rooms.get((code || '').toUpperCase().trim());
     if (!room)                       { socket.emit('joinError', { message: 'Room not found.' }); return; }
     if (room.gameState === 'gameEnd'){ socket.emit('joinError', { message: 'This game has already ended.' }); return; }
     if (room.players.length >= 8)    { socket.emit('joinError', { message: 'Room is full (max 8).' }); return; }
 
-    room.players.push({ id: socket.id, name: name.trim(), score: 0 });
+    room.players.push({ id: socket.id, name: name.trim(), score: 0, avatar: avatar || null });
     socket.join(room.code);
 
     if (room.gameState === 'lobby') {
-      socket.emit('roomJoined', { code: room.code, players: room.players, isHost: false, gameMode: room.gameMode, winScore: room.winScore, roomName: room.roomName, isPublic: room.isPublic });
-      socket.to(room.code).emit('lobbyUpdate', { players: room.players });
+      socket.emit('roomJoined', { code: room.code, players: room.players, isHost: false, hostId: room.host, gameMode: room.gameMode, winScore: room.winScore, roomName: room.roomName, isPublic: room.isPublic });
+      socket.to(room.code).emit('lobbyUpdate', { players: room.players, hostId: room.host });
     } else {
       // Mid-game join: auto-skip this round for the new player
       if (room.gameMode === 'flag' || room.gameMode === 'language') {
@@ -323,7 +323,7 @@ io.on('connection', (socket) => {
       if (room.gameMode === 'language') midPayload.audioUrl   = room.currentAudioUrl;
 
       socket.emit('roomJoined', midPayload);
-      socket.to(room.code).emit('lobbyUpdate', { players: room.players });
+      socket.to(room.code).emit('lobbyUpdate', { players: room.players, hostId: room.host });
     }
   });
 
@@ -464,7 +464,7 @@ io.on('connection', (socket) => {
         room.currentRound    = 0;
         room.usedCountryKeys = [];
         room.gameState       = 'lobby';
-        io.to(code).emit('backToLobby', { players: room.players, gameMode: room.gameMode, winScore: room.winScore, roomName: room.roomName, isPublic: room.isPublic });
+        io.to(code).emit('backToLobby', { players: room.players, hostId: room.host, gameMode: room.gameMode, winScore: room.winScore, roomName: room.roomName, isPublic: room.isPublic });
         return;
       }
     }

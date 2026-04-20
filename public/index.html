@@ -23,6 +23,56 @@
     </div>
   </div>
 
+  <!-- AVATAR CREATOR -->
+  <div id="screen-avatar" class="screen">
+    <div class="top-bar">
+      <div class="logo small"><span class="logo-geo">Geo</span><span class="logo-maniac">Maniac</span></div>
+      <span class="top-bar-mode-label">Customise your character</span>
+    </div>
+    <div class="avatar-creator-wrap">
+      <div class="avatar-preview-panel">
+        <div id="avatar-preview" class="avatar-preview-svg"></div>
+        <p class="avatar-preview-name" id="avatar-preview-name"></p>
+      </div>
+      <div class="avatar-options-panel">
+        <div class="avatar-tabs">
+          <button class="avatar-tab active" data-tab="skin">Skin</button>
+          <button class="avatar-tab" data-tab="hair">Hair</button>
+          <button class="avatar-tab" data-tab="accessory">Accessories</button>
+          <button class="avatar-tab" data-tab="shirt">Shirt</button>
+          <button class="avatar-tab" data-tab="pants">Pants</button>
+        </div>
+        <div class="avatar-tab-pane active" id="tab-skin">
+          <p class="opt-label">Skin Tone</p>
+          <div class="swatch-grid" id="skin-swatches"></div>
+        </div>
+        <div class="avatar-tab-pane" id="tab-hair">
+          <p class="opt-label">Style</p>
+          <div class="type-grid" id="hair-type-btns"></div>
+          <p class="opt-label">Color</p>
+          <div class="swatch-grid" id="hair-swatches"></div>
+        </div>
+        <div class="avatar-tab-pane" id="tab-accessory">
+          <p class="opt-label">Head Accessory</p>
+          <div class="type-grid wide" id="accessory-btns"></div>
+        </div>
+        <div class="avatar-tab-pane" id="tab-shirt">
+          <p class="opt-label">Style</p>
+          <div class="type-grid" id="shirt-type-btns"></div>
+          <p class="opt-label">Color</p>
+          <div class="swatch-grid" id="shirt-swatches"></div>
+        </div>
+        <div class="avatar-tab-pane" id="tab-pants">
+          <p class="opt-label">Style</p>
+          <div class="type-grid" id="pants-type-btns"></div>
+          <p class="opt-label">Color</p>
+          <div class="swatch-grid" id="pants-swatches"></div>
+        </div>
+        <button id="btn-avatar-done" class="btn btn-primary btn-large">Let's Play! →</button>
+      </div>
+    </div>
+  </div>
+
   <!-- HOME -->
   <div id="screen-home" class="screen">
     <div class="top-bar">
@@ -64,6 +114,8 @@
       <div class="logo small logo-clickable" id="logo-lobby"><span class="logo-geo">Geo</span><span class="logo-maniac">Maniac</span></div>
       <span class="top-bar-mode-label" id="lobby-mode-label"></span>
     </div>
+    <div class="lobby-layout">
+    <div class="lobby-avatars-panel" id="lobby-avatars-panel"></div>
     <div class="lobby-content">
       <div class="room-code-display">
         <span class="room-label">Room Code</span>
@@ -137,6 +189,7 @@
         <p id="lobby-error" class="error-msg hidden"></p>
       </div>
       <div class="game-info-box" id="lobby-rules-box"></div>
+    </div>
     </div>
   </div>
 
