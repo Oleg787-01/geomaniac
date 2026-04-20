@@ -26,115 +26,153 @@ function initials(n)    { return n.slice(0,2).toUpperCase(); }
 // ══════════════════════════════════════════
 const DICEBEAR = 'https://api.dicebear.com/9.x/avataaars/svg';
 
+// Helper: find hex for a key, strip '#'
+function _hex(arr, k) {
+  const found = arr.find(x => x.k === k);
+  return (found ? found.hex : arr[0].hex).replace('#', '');
+}
+
+// Skin: hex colours passed directly to API
 const AV_SKIN = [
-  {k:'pale',       hex:'#FDDCB5'}, {k:'light',      hex:'#EDB98A'},
-  {k:'tanned',     hex:'#D08B5B'}, {k:'yellow',     hex:'#F8D25C'},
-  {k:'brown',      hex:'#AE5D29'}, {k:'darkBrown',  hex:'#694D3D'},
-  {k:'black',      hex:'#4A312C'},
+  {k:'pale',      hex:'#FDDCB5'}, {k:'light',     hex:'#EDB98A'},
+  {k:'tanned',    hex:'#D08B5B'}, {k:'yellow',    hex:'#F8D25C'},
+  {k:'brown',     hex:'#AE5D29'}, {k:'darkBrown', hex:'#694D3D'},
+  {k:'black',     hex:'#4A312C'},
 ];
+// Hair colours: hex passed directly
 const AV_HAIR_COLOR = [
-  {k:'black',       hex:'#1a1a1a'}, {k:'auburn',      hex:'#A55728'},
-  {k:'brown',       hex:'#724133'}, {k:'brownDark',   hex:'#4A312C'},
-  {k:'blonde',      hex:'#C8A951'}, {k:'blondeGolden',hex:'#E7CA68'},
-  {k:'red',         hex:'#C0392B'}, {k:'pastelPink',  hex:'#F59797'},
-  {k:'platinum',    hex:'#ECDCBF'}, {k:'silverGray',  hex:'#C4C4C4'},
+  {k:'black',        hex:'#1a1a1a'}, {k:'auburn',       hex:'#A55728'},
+  {k:'brown',        hex:'#724133'}, {k:'brownDark',    hex:'#4A312C'},
+  {k:'blonde',       hex:'#C8A951'}, {k:'blondeGolden', hex:'#E7CA68'},
+  {k:'red',          hex:'#C0392B'}, {k:'pastelPink',   hex:'#F59797'},
+  {k:'platinum',     hex:'#ECDCBF'}, {k:'silverGray',   hex:'#C4C4C4'},
 ];
+// Top (hair style + hats) — exact DiceBear v9 keys
 const AV_TOP = [
-  {k:'shortHairShortFlat',     l:'Short Flat'},
-  {k:'shortHairShortRound',    l:'Short Round'},
-  {k:'shortHairShortCurly',    l:'Curly'},
-  {k:'shortHairShortWaved',    l:'Waved'},
-  {k:'shortHairSides',         l:'Sides'},
-  {k:'shortHairTheCaesar',     l:'Caesar'},
-  {k:'shortHairDreads01',      l:'Dreads'},
-  {k:'shortHairFrizzle',       l:'Frizzle'},
-  {k:'longHairStraight',       l:'Straight'},
-  {k:'longHairCurly',          l:'Long Curly'},
-  {k:'longHairBigHair',        l:'Big Hair'},
-  {k:'longHairBun',            l:'Bun'},
-  {k:'longHairFro',            l:'Afro'},
-  {k:'longHairBob',            l:'Bob'},
-  {k:'longHairDreads',         l:'Long Dreads'},
-  {k:'longHairMiaWallace',     l:'Mia Wallace'},
-  {k:'noHair',                 l:'Bald'},
-  {k:'hat',                    l:'🧢 Cap'},
-  {k:'winterHat1',             l:'🧶 Beanie 1'},
-  {k:'winterHat2',             l:'🧶 Beanie 2'},
-  {k:'winterHat3',             l:'⛷️ Ski Hat'},
-  {k:'winterHat4',             l:'🎩 Top Hat'},
-  {k:'eyepatch',               l:'🏴‍☠️ Eyepatch'},
-  {k:'hijab',                  l:'🧕 Hijab'},
-  {k:'turban',                 l:'👳 Turban'},
+  {k:'shortFlat',             l:'Short Flat'},
+  {k:'shortRound',            l:'Short Round'},
+  {k:'shortCurly',            l:'Curly'},
+  {k:'shortWaved',            l:'Waved'},
+  {k:'sides',                 l:'Sides'},
+  {k:'theCaesar',             l:'Caesar'},
+  {k:'theCaesarAndSidePart',  l:'Caesar + Side'},
+  {k:'dreads01',              l:'Dreads'},
+  {k:'dreads02',              l:'Dreads 2'},
+  {k:'frizzle',               l:'Frizzle'},
+  {k:'shaggy',                l:'Shaggy'},
+  {k:'shavedSides',           l:'Shaved Sides'},
+  {k:'straight01',            l:'Straight'},
+  {k:'straight02',            l:'Straight 2'},
+  {k:'curvy',                 l:'Curvy'},
+  {k:'bigHair',               l:'Big Hair'},
+  {k:'bun',                   l:'Bun'},
+  {k:'fro',                   l:'Afro'},
+  {k:'froBand',               l:'Afro Band'},
+  {k:'bob',                   l:'Bob'},
+  {k:'dreads',                l:'Long Dreads'},
+  {k:'miaWallace',            l:'Mia Wallace'},
+  {k:'longButNotTooLong',     l:'Long & Wavy'},
+  {k:'frida',                 l:'Frida'},
+  {k:'shaggyMullet',          l:'Mullet'},
+  {k:'hat',                   l:'🧢 Cap'},
+  {k:'winterHat1',            l:'🧶 Beanie 1'},
+  {k:'winterHat02',           l:'🧶 Beanie 2'},
+  {k:'winterHat03',           l:'⛷️ Ski Hat'},
+  {k:'winterHat04',           l:'🎩 Top Hat'},
+  {k:'hijab',                 l:'🧕 Hijab'},
+  {k:'turban',                l:'👳 Turban'},
 ];
+// Accessories — 'none' = omit param + set probability 0
 const AV_ACCESSORIES = [
-  {k:'blank',          l:'None'},
-  {k:'prescription01', l:'👓 Glasses'},
-  {k:'prescription02', l:'🔲 Square'},
-  {k:'round',          l:'⭕ Round'},
-  {k:'sunglasses',     l:'🕶️ Sunglasses'},
-  {k:'wayfarers',      l:'🕶️ Wayfarers'},
-  {k:'kurt',           l:'🔵 Kurt'},
+  {k:'none',          l:'None'},
+  {k:'prescription01',l:'👓 Glasses'},
+  {k:'prescription02',l:'🔲 Square'},
+  {k:'round',         l:'⭕ Round'},
+  {k:'sunglasses',    l:'🕶️ Sunglasses'},
+  {k:'wayfarers',     l:'🕶️ Wayfarers'},
+  {k:'kurt',          l:'🔵 Kurt'},
+  {k:'eyepatch',      l:'🏴‍☠️ Eyepatch'},
 ];
+// Facial hair — 'none' = omit param + probability 0
 const AV_FACIAL_HAIR = [
-  {k:'blank',           l:'None'},
-  {k:'moustacheFancy',  l:'Mustache'},
-  {k:'moustacheMagnum', l:'Magnum'},
-  {k:'beardLight',      l:'Light Beard'},
-  {k:'beardMedium',     l:'Beard'},
-  {k:'beardMagestic',   l:'Full Beard'},
+  {k:'none',           l:'None'},
+  {k:'moustacheFancy', l:'Mustache'},
+  {k:'moustacheMagnum',l:'Magnum'},
+  {k:'beardLight',     l:'Light Beard'},
+  {k:'beardMedium',    l:'Beard'},
+  {k:'beardMajestic',  l:'Full Beard'},
 ];
+// Clothes — exact DiceBear v9 keys
 const AV_CLOTHES = [
-  {k:'hoodie',         l:'Hoodie'},
-  {k:'shirtCrewNeck',  l:'Crew Neck'},
-  {k:'shirtVNeck',     l:'V-Neck'},
-  {k:'shirtScoopNeck', l:'Scoop Neck'},
-  {k:'graphicShirt',   l:'Graphic Tee'},
-  {k:'collarSweater',  l:'Sweater'},
-  {k:'blazerShirt',    l:'Blazer'},
-  {k:'blazerSweater',  l:'Blazer & Sweater'},
-  {k:'overall',        l:'Overall'},
+  {k:'hoodie',          l:'Hoodie'},
+  {k:'shirtCrewNeck',   l:'Crew Neck'},
+  {k:'shirtVNeck',      l:'V-Neck'},
+  {k:'shirtScoopNeck',  l:'Scoop Neck'},
+  {k:'graphicShirt',    l:'Graphic Tee'},
+  {k:'collarAndSweater',l:'Sweater'},
+  {k:'blazerAndShirt',  l:'Blazer'},
+  {k:'blazerAndSweater',l:'Blazer & Sweater'},
+  {k:'overall',         l:'Overall'},
 ];
+// Clothes colours: hex passed directly
 const AV_CLOTHES_COLOR = [
-  {k:'heather',     hex:'#3C4F5C'}, {k:'blue01',      hex:'#65C9FF'},
-  {k:'blue02',      hex:'#5199E4'}, {k:'blue03',      hex:'#25557C'},
-  {k:'black',       hex:'#2c2c2c'}, {k:'gray01',      hex:'#E6E6E6'},
-  {k:'gray02',      hex:'#929598'}, {k:'pastelBlue',  hex:'#B1E2FF'},
-  {k:'pastelGreen', hex:'#A7FFC4'}, {k:'pastelOrange',hex:'#FFDEB5'},
-  {k:'pastelRed',   hex:'#FFAFB9'}, {k:'pastelYellow',hex:'#FFFFB1'},
-  {k:'pink',        hex:'#FF488E'}, {k:'red',         hex:'#FF5C5C'},
-  {k:'white',       hex:'#F0F0F0'},
+  {k:'heather',      hex:'#3C4F5C'}, {k:'blue01',       hex:'#65C9FF'},
+  {k:'blue02',       hex:'#5199E4'}, {k:'blue03',       hex:'#25557C'},
+  {k:'black',        hex:'#2c2c2c'}, {k:'gray01',       hex:'#E6E6E6'},
+  {k:'gray02',       hex:'#929598'}, {k:'pastelBlue',   hex:'#B1E2FF'},
+  {k:'pastelGreen',  hex:'#A7FFC4'}, {k:'pastelOrange', hex:'#FFDEB5'},
+  {k:'pastelRed',    hex:'#FFAFB9'}, {k:'pastelYellow', hex:'#FFFFB1'},
+  {k:'pink',         hex:'#FF488E'}, {k:'red',          hex:'#FF5C5C'},
+  {k:'white',        hex:'#F0F0F0'},
 ];
 
 function defaultAvatar() {
   return {
-    skinColor:       'light',
-    topType:         'shortHairShortFlat',
-    hairColor:       'brownDark',
-    accessoriesType: 'blank',
-    facialHairType:  'blank',
-    facialHairColor: 'black',
-    clotheType:      'hoodie',
-    clotheColor:     'heather',
+    skinColor:       'light',       // key in AV_SKIN
+    topType:         'shortFlat',   // key in AV_TOP
+    hairColor:       'brownDark',   // key in AV_HAIR_COLOR
+    accessoriesType: 'none',        // key in AV_ACCESSORIES
+    facialHairType:  'none',        // key in AV_FACIAL_HAIR
+    facialHairColor: 'black',       // key in AV_HAIR_COLOR
+    clotheType:      'hoodie',      // key in AV_CLOTHES
+    clotheColor:     'heather',     // key in AV_CLOTHES_COLOR
   };
 }
 
 function getAvatarUrl(av) {
   av = Object.assign(defaultAvatar(), av || {});
-  const p = new URLSearchParams({
-    skinColor:       av.skinColor,
-    top:             av.topType,
-    hairColor:       av.hairColor,
-    accessories:     av.accessoriesType,
-    facialHair:      av.facialHairType,
-    facialHairColor: av.facialHairColor,
-    clothes:         av.clotheType,
-    clothesColor:    av.clotheColor,
-    eyes:            'happy',
-    eyebrows:        'defaultNatural',
-    mouth:           'smile',
+
+  // Build params — DiceBear v9 avataaars needs hex strings (no #) for colours
+  const params = {
+    skinColor:   _hex(AV_SKIN, av.skinColor),
+    top:         av.topType,
+    hairColor:   _hex(AV_HAIR_COLOR, av.hairColor),
+    clothing:    av.clotheType,         // NOTE: 'clothing' not 'clothes'
+    clothesColor: _hex(AV_CLOTHES_COLOR, av.clotheColor),
+    eyes:        'happy',
+    eyebrows:    'defaultNatural',
+    mouth:       'smile',
     backgroundColor: 'b6e3f4',
-  });
-  return `${DICEBEAR}?${p}`;
+  };
+
+  // Accessories: omit when none/blank, otherwise include
+  const noAcc = !av.accessoriesType || av.accessoriesType === 'none' || av.accessoriesType === 'blank';
+  if (!noAcc) {
+    params.accessories = av.accessoriesType;
+  } else {
+    params.accessoriesProbability = '0';
+  }
+
+  // Facial hair: omit when none/blank, otherwise include
+  const noFH = !av.facialHairType || av.facialHairType === 'none' || av.facialHairType === 'blank';
+  if (!noFH) {
+    params.facialHair = av.facialHairType;
+    params.facialHairColor = _hex(AV_HAIR_COLOR, av.facialHairColor);
+  } else {
+    params.facialHairProbability = '0';
+  }
+
+  return `${DICEBEAR}?${new URLSearchParams(params)}`;
 }
 
 // ── Avatar image helpers ──
