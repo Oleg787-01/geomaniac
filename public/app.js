@@ -21,158 +21,129 @@ function avatarColor(n) { let h=0; for(let i=0;i<n.length;i++) h=(h*31+n.charCod
 function initials(n)    { return n.slice(0,2).toUpperCase(); }
 
 // ══════════════════════════════════════════
-//  AVATAR SYSTEM — DiceBear avataaars
-//  https://dicebear.com/styles/avataaars
+//  AVATAR SYSTEM — DiceBear micah
+//  https://dicebear.com/styles/micah
 // ══════════════════════════════════════════
-const DICEBEAR = 'https://api.dicebear.com/9.x/avataaars/svg';
+const DICEBEAR = 'https://api.dicebear.com/9.x/micah/svg';
 
-// Helper: find hex for a key, strip '#'
-function _hex(arr, k) {
-  const found = arr.find(x => x.k === k);
-  return (found ? found.hex : arr[0].hex).replace('#', '');
-}
+// All hex values stored WITHOUT '#' (DiceBear API format)
+// k = API value / stored value, hex = display color (with #)
 
-// Skin: hex colours passed directly to API
 const AV_SKIN = [
-  {k:'pale',      hex:'#FDDCB5'}, {k:'light',     hex:'#EDB98A'},
-  {k:'tanned',    hex:'#D08B5B'}, {k:'yellow',    hex:'#F8D25C'},
-  {k:'brown',     hex:'#AE5D29'}, {k:'darkBrown', hex:'#694D3D'},
-  {k:'black',     hex:'#4A312C'},
+  {k:'f9c9b6', hex:'#f9c9b6'}, {k:'f2d3b1', hex:'#f2d3b1'},
+  {k:'edb98a', hex:'#edb98a'}, {k:'d08b5b', hex:'#d08b5b'},
+  {k:'ae5d29', hex:'#ae5d29'}, {k:'694d3d', hex:'#694d3d'},
+  {k:'4a312c', hex:'#4a312c'},
 ];
-// Hair colours: hex passed directly
 const AV_HAIR_COLOR = [
-  {k:'black',        hex:'#1a1a1a'}, {k:'auburn',       hex:'#A55728'},
-  {k:'brown',        hex:'#724133'}, {k:'brownDark',    hex:'#4A312C'},
-  {k:'blonde',       hex:'#C8A951'}, {k:'blondeGolden', hex:'#E7CA68'},
-  {k:'red',          hex:'#C0392B'}, {k:'pastelPink',   hex:'#F59797'},
-  {k:'platinum',     hex:'#ECDCBF'}, {k:'silverGray',   hex:'#C4C4C4'},
+  {k:'1a1a1a', hex:'#1a1a1a'}, {k:'724133', hex:'#724133'},
+  {k:'a55728', hex:'#a55728'}, {k:'4a312c', hex:'#4a312c'},
+  {k:'c8a951', hex:'#c8a951'}, {k:'e7ca68', hex:'#e7ca68'},
+  {k:'c0392b', hex:'#c0392b'}, {k:'f59797', hex:'#f59797'},
+  {k:'c4c4c4', hex:'#c4c4c4'}, {k:'ecdcbf', hex:'#ecdcbf'},
 ];
-// Top (hair style + hats) — exact DiceBear v9 keys
-const AV_TOP = [
-  {k:'shortFlat',             l:'Short Flat'},
-  {k:'shortRound',            l:'Short Round'},
-  {k:'shortCurly',            l:'Curly'},
-  {k:'shortWaved',            l:'Waved'},
-  {k:'sides',                 l:'Sides'},
-  {k:'theCaesar',             l:'Caesar'},
-  {k:'theCaesarAndSidePart',  l:'Caesar + Side'},
-  {k:'dreads01',              l:'Dreads'},
-  {k:'dreads02',              l:'Dreads 2'},
-  {k:'frizzle',               l:'Frizzle'},
-  {k:'shaggy',                l:'Shaggy'},
-  {k:'shavedSides',           l:'Shaved Sides'},
-  {k:'straight01',            l:'Straight'},
-  {k:'straight02',            l:'Straight 2'},
-  {k:'curvy',                 l:'Curvy'},
-  {k:'bigHair',               l:'Big Hair'},
-  {k:'bun',                   l:'Bun'},
-  {k:'fro',                   l:'Afro'},
-  {k:'froBand',               l:'Afro Band'},
-  {k:'bob',                   l:'Bob'},
-  {k:'dreads',                l:'Long Dreads'},
-  {k:'miaWallace',            l:'Mia Wallace'},
-  {k:'longButNotTooLong',     l:'Long & Wavy'},
-  {k:'frida',                 l:'Frida'},
-  {k:'shaggyMullet',          l:'Mullet'},
-  {k:'hat',                   l:'🧢 Cap'},
-  {k:'winterHat1',            l:'🧶 Beanie 1'},
-  {k:'winterHat02',           l:'🧶 Beanie 2'},
-  {k:'winterHat03',           l:'⛷️ Ski Hat'},
-  {k:'winterHat04',           l:'🎩 Top Hat'},
-  {k:'hijab',                 l:'🧕 Hijab'},
-  {k:'turban',                l:'👳 Turban'},
+const AV_BG = [
+  {k:'b6e3f4', hex:'#b6e3f4'}, {k:'c0aede', hex:'#c0aede'},
+  {k:'d1d4f9', hex:'#d1d4f9'}, {k:'ffd5dc', hex:'#ffd5dc'},
+  {k:'ffdfbf', hex:'#ffdfbf'}, {k:'d5f5e3', hex:'#d5f5e3'},
+  {k:'fef9e7', hex:'#fef9e7'}, {k:'e8f4e8', hex:'#e8f4e8'},
+  {k:'f3e5f5', hex:'#f3e5f5'}, {k:'e3f2fd', hex:'#e3f2fd'},
 ];
-// Accessories — 'none' = omit param + set probability 0
-const AV_ACCESSORIES = [
-  {k:'none',          l:'None'},
-  {k:'prescription01',l:'👓 Glasses'},
-  {k:'prescription02',l:'🔲 Square'},
-  {k:'round',         l:'⭕ Round'},
-  {k:'sunglasses',    l:'🕶️ Sunglasses'},
-  {k:'wayfarers',     l:'🕶️ Wayfarers'},
-  {k:'kurt',          l:'🔵 Kurt'},
-  {k:'eyepatch',      l:'🏴‍☠️ Eyepatch'},
+const AV_HAIR = [
+  {k:'full',        l:'Full'},       {k:'fonze',       l:'Slicked Back'},
+  {k:'dougFunny',   l:'Parted'},     {k:'dannyPhantom',l:'Spiky'},
+  {k:'mrT',         l:'Mohawk'},     {k:'mrClean',     l:'Bald'},
+  {k:'pixie',       l:'Pixie Cut'},  {k:'turban',      l:'Turban'},
 ];
-// Facial hair — 'none' = omit param + probability 0
+const AV_EYES = [
+  {k:'round',        l:'Round'},   {k:'eyes',         l:'Default'},
+  {k:'smiling',      l:'Happy'},   {k:'eyesShadow',   l:'Shadow'},
+  {k:'smilingShadow',l:'Glam'},
+];
+const AV_EYEBROWS = [
+  {k:'up',           l:'Raised'},  {k:'down',          l:'Lowered'},
+  {k:'eyelashesUp',  l:'Lashes'},  {k:'eyelashesDown', l:'Lashes Down'},
+];
+const AV_MOUTH = [
+  {k:'smile',    l:'Smile'},    {k:'laughing', l:'Laughing'},
+  {k:'smirk',    l:'Smirk'},    {k:'surprised',l:'Surprised'},
+  {k:'pucker',   l:'Pucker'},   {k:'nervous',  l:'Nervous'},
+  {k:'sad',      l:'Sad'},      {k:'frown',    l:'Frown'},
+];
+const AV_GLASSES = [
+  {k:'none',  l:'None'},  {k:'round', l:'Round'},  {k:'square', l:'Square'},
+];
 const AV_FACIAL_HAIR = [
-  {k:'none',           l:'None'},
-  {k:'moustacheFancy', l:'Mustache'},
-  {k:'moustacheMagnum',l:'Magnum'},
-  {k:'beardLight',     l:'Light Beard'},
-  {k:'beardMedium',    l:'Beard'},
-  {k:'beardMajestic',  l:'Full Beard'},
+  {k:'none',  l:'None'},  {k:'beard', l:'Beard'},  {k:'scruff', l:'Scruff'},
 ];
-// Clothes — exact DiceBear v9 keys
-const AV_CLOTHES = [
-  {k:'hoodie',          l:'Hoodie'},
-  {k:'shirtCrewNeck',   l:'Crew Neck'},
-  {k:'shirtVNeck',      l:'V-Neck'},
-  {k:'shirtScoopNeck',  l:'Scoop Neck'},
-  {k:'graphicShirt',    l:'Graphic Tee'},
-  {k:'collarAndSweater',l:'Sweater'},
-  {k:'blazerAndShirt',  l:'Blazer'},
-  {k:'blazerAndSweater',l:'Blazer & Sweater'},
-  {k:'overall',         l:'Overall'},
+const AV_EARRINGS = [
+  {k:'none', l:'None'}, {k:'hoop', l:'Hoop'}, {k:'stud', l:'Stud'},
 ];
-// Clothes colours: hex passed directly
+const AV_SHIRT = [
+  {k:'crew', l:'Crew Neck'}, {k:'collared', l:'Collared'}, {k:'open', l:'Open'},
+];
 const AV_CLOTHES_COLOR = [
-  {k:'heather',      hex:'#3C4F5C'}, {k:'blue01',       hex:'#65C9FF'},
-  {k:'blue02',       hex:'#5199E4'}, {k:'blue03',       hex:'#25557C'},
-  {k:'black',        hex:'#2c2c2c'}, {k:'gray01',       hex:'#E6E6E6'},
-  {k:'gray02',       hex:'#929598'}, {k:'pastelBlue',   hex:'#B1E2FF'},
-  {k:'pastelGreen',  hex:'#A7FFC4'}, {k:'pastelOrange', hex:'#FFDEB5'},
-  {k:'pastelRed',    hex:'#FFAFB9'}, {k:'pastelYellow', hex:'#FFFFB1'},
-  {k:'pink',         hex:'#FF488E'}, {k:'red',          hex:'#FF5C5C'},
-  {k:'white',        hex:'#F0F0F0'},
+  {k:'5199E4', hex:'#5199E4'}, {k:'25557C', hex:'#25557C'},
+  {k:'65C9FF', hex:'#65C9FF'}, {k:'2c2c2c', hex:'#2c2c2c'},
+  {k:'929598', hex:'#929598'}, {k:'E6E6E6', hex:'#E6E6E6'},
+  {k:'A7FFC4', hex:'#A7FFC4'}, {k:'059669', hex:'#059669'},
+  {k:'FFDEB5', hex:'#FFDEB5'}, {k:'FFAFB9', hex:'#FFAFB9'},
+  {k:'FF488E', hex:'#FF488E'}, {k:'FF5C5C', hex:'#FF5C5C'},
+  {k:'7c3aed', hex:'#7c3aed'}, {k:'F0F0F0', hex:'#F0F0F0'},
 ];
 
 function defaultAvatar() {
   return {
-    skinColor:       'light',       // key in AV_SKIN
-    topType:         'shortFlat',   // key in AV_TOP
-    hairColor:       'brownDark',   // key in AV_HAIR_COLOR
-    accessoriesType: 'none',        // key in AV_ACCESSORIES
-    facialHairType:  'none',        // key in AV_FACIAL_HAIR
-    facialHairColor: 'black',       // key in AV_HAIR_COLOR
-    clotheType:      'hoodie',      // key in AV_CLOTHES
-    clotheColor:     'heather',     // key in AV_CLOTHES_COLOR
+    baseColor:       'f9c9b6',
+    hair:            'full',
+    hairColor:       '724133',
+    eyes:            'round',
+    eyebrows:        'up',
+    mouth:           'smile',
+    ears:            'attached',
+    shirt:           'crew',
+    shirtColor:      '5199E4',
+    glasses:         'none',
+    glassesColor:    '5199E4',
+    facialHair:      'none',
+    facialHairColor: '724133',
+    earrings:        'none',
+    earringColor:    'FFD700',
+    backgroundColor: 'b6e3f4',
   };
 }
 
 function getAvatarUrl(av) {
-  av = Object.assign(defaultAvatar(), av || {});
-
-  // Build params — DiceBear v9 avataaars needs hex strings (no #) for colours
-  const params = {
-    skinColor:   _hex(AV_SKIN, av.skinColor),
-    top:         av.topType,
-    hairColor:   _hex(AV_HAIR_COLOR, av.hairColor),
-    clothing:    av.clotheType,         // NOTE: 'clothing' not 'clothes'
-    clothesColor: _hex(AV_CLOTHES_COLOR, av.clotheColor),
-    eyes:        'happy',
-    eyebrows:    'defaultNatural',
-    mouth:       'smile',
-    backgroundColor: 'b6e3f4',
+  av = { ...defaultAvatar(), ...(av || {}) };
+  const p = {
+    baseColor:       av.baseColor,
+    hair:            av.hair,
+    hairColor:       av.hairColor,
+    eyes:            av.eyes,
+    eyebrows:        av.eyebrows,
+    mouth:           av.mouth,
+    ears:            av.ears || 'attached',
+    shirt:           av.shirt,
+    shirtColor:      av.shirtColor,
+    glassesColor:    av.glassesColor,
+    facialHairColor: av.facialHairColor,
+    earringColor:    av.earringColor || 'FFD700',
+    backgroundColor: av.backgroundColor || 'b6e3f4',
+    radius:          '50',
   };
-
-  // Accessories: omit when none/blank, otherwise include
-  const noAcc = !av.accessoriesType || av.accessoriesType === 'none' || av.accessoriesType === 'blank';
-  if (!noAcc) {
-    params.accessories = av.accessoriesType;
-  } else {
-    params.accessoriesProbability = '0';
-  }
-
-  // Facial hair: omit when none/blank, otherwise include
-  const noFH = !av.facialHairType || av.facialHairType === 'none' || av.facialHairType === 'blank';
-  if (!noFH) {
-    params.facialHair = av.facialHairType;
-    params.facialHairColor = _hex(AV_HAIR_COLOR, av.facialHairColor);
-  } else {
-    params.facialHairProbability = '0';
-  }
-
-  return `${DICEBEAR}?${new URLSearchParams(params)}`;
+  // Glasses
+  if (av.glasses && av.glasses !== 'none') {
+    p.glasses = av.glasses; p.glassesProbability = '100';
+  } else { p.glassesProbability = '0'; }
+  // Facial hair
+  if (av.facialHair && av.facialHair !== 'none') {
+    p.facialHair = av.facialHair; p.facialHairProbability = '100';
+  } else { p.facialHairProbability = '0'; }
+  // Earrings
+  if (av.earrings && av.earrings !== 'none') {
+    p.earrings = av.earrings; p.earringsProbability = '100';
+  } else { p.earringsProbability = '0'; }
+  return `${DICEBEAR}?${new URLSearchParams(p)}`;
 }
 
 // ── Avatar image helpers ──
@@ -290,33 +261,45 @@ function setupAvatarCreator() {
     });
   });
 
-  // Skin
-  makeSwatchGrid('skin-swatches', AV_SKIN, currentAvatar.skinColor,
-    v => { currentAvatar.skinColor = v; saveAvatar(currentAvatar); });
+  // ── Skin + Background ──
+  makeSwatchGrid('skin-swatches', AV_SKIN, currentAvatar.baseColor,
+    v => { currentAvatar.baseColor = v; saveAvatar(currentAvatar); });
+  makeSwatchGrid('bg-swatches', AV_BG, currentAvatar.backgroundColor,
+    v => { currentAvatar.backgroundColor = v; saveAvatar(currentAvatar); });
 
-  // Hair & Head (top style + hair colour)
-  makeTypeGrid('hair-type-btns', AV_TOP, currentAvatar.topType,
-    v => { currentAvatar.topType = v; saveAvatar(currentAvatar); });
+  // ── Hair ──
+  makeTypeGrid('hair-type-btns', AV_HAIR, currentAvatar.hair,
+    v => { currentAvatar.hair = v; saveAvatar(currentAvatar); });
   makeSwatchGrid('hair-swatches', AV_HAIR_COLOR, currentAvatar.hairColor,
     v => { currentAvatar.hairColor = v; saveAvatar(currentAvatar); });
 
-  // Accessories (glasses etc.)
-  makeTypeGrid('accessory-btns', AV_ACCESSORIES, currentAvatar.accessoriesType,
-    v => { currentAvatar.accessoriesType = v; saveAvatar(currentAvatar); });
+  // ── Face ──
+  makeTypeGrid('eyes-btns', AV_EYES, currentAvatar.eyes,
+    v => { currentAvatar.eyes = v; saveAvatar(currentAvatar); });
+  makeTypeGrid('eyebrows-btns', AV_EYEBROWS, currentAvatar.eyebrows,
+    v => { currentAvatar.eyebrows = v; saveAvatar(currentAvatar); });
+  makeTypeGrid('mouth-btns', AV_MOUTH, currentAvatar.mouth,
+    v => { currentAvatar.mouth = v; saveAvatar(currentAvatar); });
 
-  // Facial Hair
-  makeTypeGrid('facial-hair-btns', AV_FACIAL_HAIR, currentAvatar.facialHairType,
-    v => { currentAvatar.facialHairType = v; saveAvatar(currentAvatar); });
+  // ── Extras ──
+  makeTypeGrid('glasses-btns', AV_GLASSES, currentAvatar.glasses,
+    v => { currentAvatar.glasses = v; saveAvatar(currentAvatar); });
+  makeSwatchGrid('glasses-swatches', AV_CLOTHES_COLOR, currentAvatar.glassesColor,
+    v => { currentAvatar.glassesColor = v; saveAvatar(currentAvatar); });
+  makeTypeGrid('facial-hair-btns', AV_FACIAL_HAIR, currentAvatar.facialHair,
+    v => { currentAvatar.facialHair = v; saveAvatar(currentAvatar); });
   makeSwatchGrid('facial-hair-swatches', AV_HAIR_COLOR, currentAvatar.facialHairColor,
     v => { currentAvatar.facialHairColor = v; saveAvatar(currentAvatar); });
+  makeTypeGrid('earrings-btns', AV_EARRINGS, currentAvatar.earrings,
+    v => { currentAvatar.earrings = v; saveAvatar(currentAvatar); });
 
-  // Outfit (clothes style + colour)
-  makeTypeGrid('shirt-type-btns', AV_CLOTHES, currentAvatar.clotheType,
-    v => { currentAvatar.clotheType = v; saveAvatar(currentAvatar); });
-  makeSwatchGrid('shirt-swatches', AV_CLOTHES_COLOR, currentAvatar.clotheColor,
-    v => { currentAvatar.clotheColor = v; saveAvatar(currentAvatar); });
+  // ── Outfit ──
+  makeTypeGrid('shirt-type-btns', AV_SHIRT, currentAvatar.shirt,
+    v => { currentAvatar.shirt = v; saveAvatar(currentAvatar); });
+  makeSwatchGrid('shirt-swatches', AV_CLOTHES_COLOR, currentAvatar.shirtColor,
+    v => { currentAvatar.shirtColor = v; saveAvatar(currentAvatar); });
 
-  // Done button
+  // Done
   document.getElementById('btn-avatar-done').addEventListener('click', () => {
     saveAvatar(currentAvatar);
     showHomeScreen();

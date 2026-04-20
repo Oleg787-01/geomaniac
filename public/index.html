@@ -37,30 +37,42 @@
       <div class="avatar-options-panel">
         <div class="avatar-tabs">
           <button class="avatar-tab active" data-tab="skin">Skin</button>
-          <button class="avatar-tab" data-tab="hair">Hair &amp; Head</button>
-          <button class="avatar-tab" data-tab="accessory">Accessories</button>
-          <button class="avatar-tab" data-tab="facial">Facial</button>
+          <button class="avatar-tab" data-tab="hair">Hair</button>
+          <button class="avatar-tab" data-tab="face">Face</button>
+          <button class="avatar-tab" data-tab="extras">Extras</button>
           <button class="avatar-tab" data-tab="shirt">Outfit</button>
         </div>
         <div class="avatar-tab-pane active" id="tab-skin">
           <p class="opt-label">Skin Tone</p>
           <div class="swatch-grid" id="skin-swatches"></div>
+          <p class="opt-label">Background Color</p>
+          <div class="swatch-grid" id="bg-swatches"></div>
         </div>
         <div class="avatar-tab-pane" id="tab-hair">
-          <p class="opt-label">Style / Head</p>
-          <div class="type-grid wide" id="hair-type-btns"></div>
+          <p class="opt-label">Hair Style</p>
+          <div class="type-grid" id="hair-type-btns"></div>
           <p class="opt-label">Hair Color</p>
           <div class="swatch-grid" id="hair-swatches"></div>
         </div>
-        <div class="avatar-tab-pane" id="tab-accessory">
-          <p class="opt-label">Glasses</p>
-          <div class="type-grid" id="accessory-btns"></div>
+        <div class="avatar-tab-pane" id="tab-face">
+          <p class="opt-label">Eyes</p>
+          <div class="type-grid" id="eyes-btns"></div>
+          <p class="opt-label">Eyebrows</p>
+          <div class="type-grid" id="eyebrows-btns"></div>
+          <p class="opt-label">Mouth</p>
+          <div class="type-grid" id="mouth-btns"></div>
         </div>
-        <div class="avatar-tab-pane" id="tab-facial">
+        <div class="avatar-tab-pane" id="tab-extras">
+          <p class="opt-label">Glasses</p>
+          <div class="type-grid" id="glasses-btns"></div>
+          <p class="opt-label">Glasses Color</p>
+          <div class="swatch-grid" id="glasses-swatches"></div>
           <p class="opt-label">Facial Hair</p>
           <div class="type-grid" id="facial-hair-btns"></div>
-          <p class="opt-label">Color</p>
+          <p class="opt-label">Facial Hair Color</p>
           <div class="swatch-grid" id="facial-hair-swatches"></div>
+          <p class="opt-label">Earrings</p>
+          <div class="type-grid" id="earrings-btns"></div>
         </div>
         <div class="avatar-tab-pane" id="tab-shirt">
           <p class="opt-label">Outfit Style</p>
