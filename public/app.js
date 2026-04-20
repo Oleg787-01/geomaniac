@@ -179,7 +179,7 @@ function getAvatarUrl(av) {
 function avatarImg(av, size, rounded = true) {
   const url = getAvatarUrl(av);
   const r = rounded ? 'border-radius:50%;' : '';
-  return `<img src="${url}" width="${size}" height="${size}" style="display:block;${r}" loading="lazy" alt="avatar"/>`;
+  return `<img src="${url}" width="${size}" height="${size}" style="display:block;${r}" alt="avatar"/>`;
 }
 
 function showScreen(id) {
@@ -389,18 +389,18 @@ function doLandingContinue() {
 
 function showAvatarScreen() {
   document.getElementById('avatar-preview-name').textContent = myName;
-  updateAvatarPreview();
   showScreen('screen-avatar');
+  updateAvatarPreview();  // after showScreen so img isn't in display:none
 }
 
 // ════ HOME ════
 function showHomeScreen() {
   document.getElementById('home-player-name').textContent = myName;
-  updateHomeChip();
+  showScreen('screen-home');
+  updateHomeChip();  // after showScreen so img isn't in display:none
   document.getElementById('room-code-input').value = pendingRoomCode || '';
   pendingRoomCode = '';
   document.getElementById('room-error').classList.add('hidden');
-  showScreen('screen-home');
   fetchPublicRooms();
 }
 
