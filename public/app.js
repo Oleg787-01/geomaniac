@@ -113,36 +113,42 @@ function defaultAvatar() {
   };
 }
 
+// Validate a 6-char hex string (no #) — guards against old avatar format leaking in
+function isHex6(v) { return typeof v === 'string' && /^[0-9a-fA-F]{6}$/.test(v); }
+function validKey(arr, v) { return arr.some(x => x.k === v); }
+
 function getAvatarUrl(av) {
-  av = { ...defaultAvatar(), ...(av || {}) };
+  const def = defaultAvatar();
+  av = { ...def, ...(av || {}) };
+  // Sanitise every field — old saved avatars may have named keys instead of hex
   const p = {
-    baseColor:       av.baseColor,
-    hair:            av.hair,
-    hairColor:       av.hairColor,
-    eyes:            av.eyes,
-    eyebrows:        av.eyebrows,
-    mouth:           av.mouth,
-    ears:            av.ears || 'attached',
-    shirt:           av.shirt,
-    shirtColor:      av.shirtColor,
-    glassesColor:    av.glassesColor,
-    facialHairColor: av.facialHairColor,
-    earringColor:    av.earringColor || 'FFD700',
-    backgroundColor: av.backgroundColor || 'b6e3f4',
+    baseColor:       isHex6(av.baseColor)       ? av.baseColor       : def.baseColor,
+    hair:            validKey(AV_HAIR, av.hair)  ? av.hair            : def.hair,
+    hairColor:       isHex6(av.hairColor)        ? av.hairColor       : def.hairColor,
+    eyes:            validKey(AV_EYES, av.eyes)  ? av.eyes            : def.eyes,
+    eyebrows:        validKey(AV_EYEBROWS, av.eyebrows) ? av.eyebrows : def.eyebrows,
+    mouth:           validKey(AV_MOUTH, av.mouth) ? av.mouth          : def.mouth,
+    ears:            av.ears === 'detached' ? 'detached' : 'attached',
+    shirt:           validKey(AV_SHIRT, av.shirt) ? av.shirt          : def.shirt,
+    shirtColor:      isHex6(av.shirtColor)       ? av.shirtColor      : def.shirtColor,
+    glassesColor:    isHex6(av.glassesColor)     ? av.glassesColor    : def.glassesColor,
+    facialHairColor: isHex6(av.facialHairColor)  ? av.facialHairColor : def.facialHairColor,
+    earringColor:    isHex6(av.earringColor)     ? av.earringColor    : def.earringColor,
+    backgroundColor: isHex6(av.backgroundColor) ? av.backgroundColor : def.backgroundColor,
     radius:          '50',
   };
   // Glasses
-  if (av.glasses && av.glasses !== 'none') {
-    p.glasses = av.glasses; p.glassesProbability = '100';
-  } else { p.glassesProbability = '0'; }
+  const gl = validKey(AV_GLASSES, av.glasses) ? av.glasses : 'none';
+  if (gl !== 'none') { p.glasses = gl; p.glassesProbability = '100'; }
+  else               { p.glassesProbability = '0'; }
   // Facial hair
-  if (av.facialHair && av.facialHair !== 'none') {
-    p.facialHair = av.facialHair; p.facialHairProbability = '100';
-  } else { p.facialHairProbability = '0'; }
+  const fh = validKey(AV_FACIAL_HAIR, av.facialHair) ? av.facialHair : 'none';
+  if (fh !== 'none') { p.facialHair = fh; p.facialHairProbability = '100'; }
+  else               { p.facialHairProbability = '0'; }
   // Earrings
-  if (av.earrings && av.earrings !== 'none') {
-    p.earrings = av.earrings; p.earringsProbability = '100';
-  } else { p.earringsProbability = '0'; }
+  const er = validKey(AV_EARRINGS, av.earrings) ? av.earrings : 'none';
+  if (er !== 'none') { p.earrings = er; p.earringsProbability = '100'; }
+  else               { p.earringsProbability = '0'; }
   return `${DICEBEAR}?${new URLSearchParams(p)}`;
 }
 
@@ -1023,9 +1029,14 @@ socket.on('backToLobby', ({ players, hostId, gameMode, winScore, roomName, isPub
   const pathCode = window.location.pathname.slice(1).toUpperCase().trim();
   if (pathCode && /^[A-Z0-9]{6}$/.test(pathCode)) pendingRoomCode = pathCode;
 
-  // Load saved avatar
+  // Load saved avatar — discard if it's the old avataaars format (no hex baseColor)
   const savedAv = loadAvatar();
-  if (savedAv) currentAvatar = { ...defaultAvatar(), ...savedAv };
+  if (savedAv && isHex6(savedAv.baseColor)) {
+    currentAvatar = { ...defaultAvatar(), ...savedAv };
+  } else if (savedAv) {
+    // Old format — clear it so stale named-color keys don't pollute the new system
+    localStorage.removeItem('geoManiacAvatar');
+  }
 
   setupAvatarCreator();
 
