@@ -215,6 +215,10 @@ function endRound(roomCode) {
     });
   }
 
+  const shouldEnd =
+    (room.gameMode === 'outline'  && room.currentRound >= ROUNDS_PER_GAME) ||
+    ((room.gameMode === 'flag' || room.gameMode === 'language') && flagHasWinner);
+
   io.to(roomCode).emit('roundEnd', {
     correctAnswer: room.currentCountry.name,
     scores: room.players.map(p => ({ id: p.id, name: p.name, score: p.score })),
@@ -222,11 +226,8 @@ function endRound(roomCode) {
     round: room.currentRound,
     totalRounds: room.gameMode === 'outline' ? ROUNDS_PER_GAME : null,
     gameMode: room.gameMode,
+    isLast: shouldEnd,   // tells client this is the final round
   });
-
-  const shouldEnd =
-    (room.gameMode === 'outline'  && room.currentRound >= ROUNDS_PER_GAME) ||
-    ((room.gameMode === 'flag' || room.gameMode === 'language') && flagHasWinner);
 
   setTimeout(() => shouldEnd ? endGame(roomCode) : startRound(roomCode), 4000);
 }

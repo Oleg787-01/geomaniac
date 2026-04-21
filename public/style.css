@@ -317,7 +317,13 @@ input[type="text"]:focus { border-color: var(--accent); }
   .avatar-creator-wrap { flex-direction: column; overflow-y: auto; }
   .avatar-preview-panel { width: 100%; flex-direction: row; padding: 16px; }
   .avatar-preview-svg { width: 100px; }
-  .lobby-avatars-panel { width: 100%; flex-direction: row; border-right: none; border-bottom: 1px solid var(--border); overflow-x: auto; overflow-y: hidden; padding: 10px; flex-shrink: 0; max-height: 130px; }
-  .lobby-avatar-card img { width: 60px; height: 60px; }
-  .lobby-content { padding: 16px 12px; }
+
+  /* Lobby: stack vertically so content is always reachable */
+  .lobby-layout { flex-direction: column; overflow-y: auto; }
+  .lobby-avatars-panel { width: 100%; flex-direction: row; border-right: none; border-bottom: 1px solid var(--border); overflow-x: auto; overflow-y: hidden; padding: 10px; flex-shrink: 0; max-height: 110px; }
+  .lobby-avatar-card img { width: 56px; height: 56px; }
+  .lobby-content { flex: 1; overflow-y: visible; padding: 12px; min-height: 0; }
+  .card { padding: 16px; }
+  .mode-select-opt { padding: 10px 12px; gap: 8px; }
+  .mode-opt-icon { font-size: 1.4rem; }
 }

@@ -933,9 +933,10 @@ socket.on('playerSubmitted', ({ playerName }) => {
   $guessedList.appendChild(li);
 });
 
-socket.on('roundEnd', ({ correctAnswer, scores, playerResults, round, totalRounds, gameMode }) => {
+socket.on('roundEnd', ({ correctAnswer, scores, playerResults, round, totalRounds, gameMode, isLast }) => {
   roundActive = false;
   clearInterval(timerInterval);
+  clearInterval(_countdownInterval);
   setGuessState(true);
   if (languageAudio) { languageAudio.pause(); languageAudio.currentTime = 0; }
 
@@ -974,11 +975,14 @@ socket.on('roundEnd', ({ correctAnswer, scores, playerResults, round, totalRound
     });
   }
 
-  const isLast = (gameMode === 'outline' && round >= totalRounds);
   $roundOverlay.classList.remove('hidden');
-  clearInterval(_countdownInterval);
   if (isLast) {
     $overlayNextText.textContent = 'Calculating final scores...';
+    // Failsafe: if gameEnd never arrives (mobile network drop), go home after 8s
+    _countdownInterval = setTimeout(() => {
+      $roundOverlay.classList.add('hidden');
+      goHome();
+    }, 8000);
   } else {
     let secs = 4;
     $overlayNextText.textContent = `Next round in ${secs}s...`;
@@ -991,6 +995,8 @@ socket.on('roundEnd', ({ correctAnswer, scores, playerResults, round, totalRound
 });
 
 socket.on('gameEnd', ({ results, winner, isDraw, drawPlayers }) => {
+  clearInterval(_countdownInterval);   // also clears the failsafe setTimeout
+  clearTimeout(_countdownInterval);
   $roundOverlay.classList.add('hidden');
 
   if (isDraw) {
@@ -1018,6 +1024,15 @@ socket.on('gameEnd', ({ results, winner, isDraw, drawPlayers }) => {
 });
 
 socket.on('backToLobby', ({ players, hostId, gameMode, winScore, roomName, isPublic }) => {
+  // Clean up any leftover game state so nothing is blocked
+  clearInterval(timerInterval);
+  clearInterval(_countdownInterval);
+  clearTimeout(_countdownInterval);
+  roundActive = false;
+  hasSubmitted = false;
+  $roundOverlay.classList.add('hidden');
+  if (languageAudio) { languageAudio.pause(); languageAudio = null; }
+
   inRoom = true;
   if (hostId) currentHostId = hostId;
   $displayCode.textContent = myRoomCode;
