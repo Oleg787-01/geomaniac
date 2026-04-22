@@ -110,7 +110,8 @@ input[type="text"]:focus { border-color: var(--accent); }
 
 /* ════════════════ GAME ════════════════ */
 #screen-game { flex-direction: column; }
-.game-header { display: flex; align-items: center; gap: 20px; padding: 10px 20px; background: var(--surface); border-bottom: 1px solid var(--border); flex-shrink: 0; }
+.game-header { display: flex; align-items: center; gap: 12px; padding: 10px 20px; background: var(--surface); border-bottom: 1px solid var(--border); flex-shrink: 0; }
+.game-back-btn { font-size: 0.78rem; padding: 5px 12px; white-space: nowrap; flex-shrink: 0; }
 .round-info { font-size: 1rem; font-weight: 600; color: var(--text-muted); white-space: nowrap; }
 .timer-wrap { flex: 1; max-width: 220px; margin-left: auto; background: var(--surface2); border-radius: 20px; height: 26px; padding: 0 10px; position: relative; overflow: hidden; }
 .timer-bar-fill { position: absolute; left: 0; top: 0; bottom: 0; background: var(--green); border-radius: 20px; transition: width 1s linear, background 1s linear; width: 100%; }

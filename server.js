@@ -471,6 +471,21 @@ io.on('connection', (socket) => {
     }
   });
 
+  // Host abandons the game mid-round — stops timer, resets scores, sends everyone back to lobby
+  socket.on('abandonGame', () => {
+    for (const [code, room] of rooms) {
+      if (room.host === socket.id && (room.gameState === 'playing' || room.gameState === 'roundEnd')) {
+        if (room.roundTimer) { clearTimeout(room.roundTimer); room.roundTimer = null; }
+        room.players.forEach(p => { p.score = 0; });
+        room.currentRound    = 0;
+        room.usedCountryKeys = [];
+        room.gameState       = 'lobby';
+        io.to(code).emit('backToLobby', { players: room.players, hostId: room.host, gameMode: room.gameMode, winScore: room.winScore, roomName: room.roomName, isPublic: room.isPublic });
+        return;
+      }
+    }
+  });
+
   socket.on('disconnect', () => {
     removePlayerFromRoom(socket.id, null);
   });

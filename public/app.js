@@ -600,6 +600,7 @@ const $overlayResults = document.getElementById('overlay-results');
 const $overlayNextText = document.getElementById('overlay-next-text');
 const $svgEl          = document.getElementById('country-svg');
 const $svgLoading     = document.getElementById('svg-loading');
+const $btnMidLobby    = document.getElementById('btn-mid-lobby');
 const $flagImg        = document.getElementById('flag-img');
 const $winTarget      = document.getElementById('win-target');
 const $displayOutline   = document.getElementById('display-outline');
@@ -718,6 +719,12 @@ $btnGiveUp.addEventListener('click', () => {
   showFeedback(currentGameMode === 'flag' ? 'Skipped — 0 pts this round' : 'You gave up this round.', 'gave-up');
 });
 
+$btnMidLobby.addEventListener('click', () => {
+  if (!isHost) return;
+  if (!confirm('End the current game and return everyone to the lobby?')) return;
+  socket.emit('abandonGame');
+});
+
 // ════ RESULTS SCREEN ════
 const $winnerBanner    = document.getElementById('winner-banner');
 const $resultsList     = document.getElementById('results-list');
@@ -791,6 +798,7 @@ socket.on('roomJoined', ({ code, players, hostId, gameMode, winScore, midGame, g
     if (scores) renderScores(scores);
     showFeedback("You joined mid-round — next round you're in!", 'gave-up');
     if (gameState === 'playing' && timeRemaining > 0) startTimerAt(timeRemaining, timeLimit || 30);
+    $btnMidLobby.classList.toggle('hidden', !isHost);
     showScreen('screen-game');
   } else {
     showLobby(players, gameMode, winScore, false, roomName, isPublic);
@@ -901,6 +909,7 @@ socket.on('roundStart', ({ round, totalRounds, gameMode, countryId, flagAlpha2, 
   }
 
   startTimer(timeLimit);
+  $btnMidLobby.classList.toggle('hidden', !isHost);
   showScreen('screen-game');
   setTimeout(() => $guessInput.focus(), 50);
 });
