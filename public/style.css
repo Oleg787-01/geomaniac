@@ -109,13 +109,13 @@ input[type="text"]:focus { border-color: var(--accent); }
 .rules-list li::before { content: '▸'; position: absolute; left: 0; color: var(--accent); }
 
 /* ════════════════ GAME ════════════════ */
-#screen-game { flex-direction: column; position: relative; }
+#screen-game { flex-direction: column; }
 .game-header { display: flex; align-items: center; gap: 12px; padding: 10px 20px; background: var(--surface); border-bottom: 1px solid var(--border); flex-shrink: 0; }
 .game-menu-btn { font-size: 1rem; padding: 4px 10px; flex-shrink: 0; }
 .round-info { font-size: 1rem; font-weight: 600; color: var(--text-muted); white-space: nowrap; }
 
 /* Pause overlay */
-.pause-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.55); display: flex; align-items: center; justify-content: center; z-index: 200; backdrop-filter: blur(3px); }
+.pause-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.55); display: flex; align-items: center; justify-content: center; z-index: 200; backdrop-filter: blur(3px); }
 .pause-card { background: var(--surface); border: 1px solid var(--border); border-radius: 18px; padding: 36px 32px; display: flex; flex-direction: column; gap: 12px; min-width: 280px; text-align: center; animation: popIn 0.15s ease; }
 .pause-title { font-size: 1.3rem; font-weight: 700; margin-bottom: 4px; }
 .pause-esc-hint { font-size: 0.75rem; color: var(--text-muted); margin-top: 4px; }
