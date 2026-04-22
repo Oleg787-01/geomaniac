@@ -935,7 +935,6 @@ socket.on('roundStart', ({ round, totalRounds, gameMode, countryId, flagAlpha2, 
   }
 
   startTimer(timeLimit);
-  $btnMidLobby.classList.toggle('hidden', !isHost);
   showScreen('screen-game');
   setTimeout(() => $guessInput.focus(), 50);
 });
