@@ -209,7 +209,7 @@
   <div id="screen-game" class="screen">
     <div class="game-header">
       <div class="logo small logo-clickable" id="logo-game"><span class="logo-geo">Geo</span><span class="logo-maniac">Maniac</span></div>
-      <button id="btn-mid-lobby" class="btn btn-ghost btn-sm game-back-btn hidden">⬅ Lobby</button>
+      <button id="btn-pause-open" class="btn btn-ghost btn-sm game-menu-btn" title="Menu (Esc)">☰</button>
       <div class="round-info" id="round-info-text">Round 1 / 5</div>
       <div class="timer-wrap">
         <div id="timer-bar-fill" class="timer-bar-fill"></div>
@@ -263,6 +263,16 @@
           <h4>This round</h4>
           <ul id="guessed-list" class="guessed-list"></ul>
         </div>
+      </div>
+    </div>
+
+    <!-- PAUSE MENU -->
+    <div id="pause-overlay" class="pause-overlay hidden">
+      <div class="pause-card">
+        <div class="pause-title">Game Menu</div>
+        <button id="btn-pause-lobby" class="btn btn-secondary btn-large hidden">⬅ Back to Lobby</button>
+        <button id="btn-pause-resume" class="btn btn-primary btn-large">▶ Resume</button>
+        <p class="pause-esc-hint">Press Esc to close</p>
       </div>
     </div>
 

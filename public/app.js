@@ -600,7 +600,10 @@ const $overlayResults = document.getElementById('overlay-results');
 const $overlayNextText = document.getElementById('overlay-next-text');
 const $svgEl          = document.getElementById('country-svg');
 const $svgLoading     = document.getElementById('svg-loading');
-const $btnMidLobby    = document.getElementById('btn-mid-lobby');
+const $pauseOverlay   = document.getElementById('pause-overlay');
+const $btnPauseOpen   = document.getElementById('btn-pause-open');
+const $btnPauseLobby  = document.getElementById('btn-pause-lobby');
+const $btnPauseResume = document.getElementById('btn-pause-resume');
 const $flagImg        = document.getElementById('flag-img');
 const $winTarget      = document.getElementById('win-target');
 const $displayOutline   = document.getElementById('display-outline');
@@ -719,10 +722,33 @@ $btnGiveUp.addEventListener('click', () => {
   showFeedback(currentGameMode === 'flag' ? 'Skipped — 0 pts this round' : 'You gave up this round.', 'gave-up');
 });
 
-$btnMidLobby.addEventListener('click', () => {
-  if (!isHost) return;
-  if (!confirm('End the current game and return everyone to the lobby?')) return;
+// ── Pause menu ──
+function openPauseMenu() {
+  $btnPauseLobby.classList.toggle('hidden', !isHost);
+  $pauseOverlay.classList.remove('hidden');
+}
+function closePauseMenu() {
+  $pauseOverlay.classList.add('hidden');
+}
+
+$btnPauseOpen.addEventListener('click', openPauseMenu);
+$btnPauseResume.addEventListener('click', closePauseMenu);
+$pauseOverlay.addEventListener('click', e => { if (e.target === $pauseOverlay) closePauseMenu(); });
+
+$btnPauseLobby.addEventListener('click', () => {
+  closePauseMenu();
   socket.emit('abandonGame');
+});
+
+document.addEventListener('keydown', e => {
+  if (e.key !== 'Escape') return;
+  const gameVisible = document.getElementById('screen-game').classList.contains('active');
+  if (!gameVisible) return;
+  if ($pauseOverlay.classList.contains('hidden')) {
+    openPauseMenu();
+  } else {
+    closePauseMenu();
+  }
 });
 
 // ════ RESULTS SCREEN ════
@@ -798,7 +824,7 @@ socket.on('roomJoined', ({ code, players, hostId, gameMode, winScore, midGame, g
     if (scores) renderScores(scores);
     showFeedback("You joined mid-round — next round you're in!", 'gave-up');
     if (gameState === 'playing' && timeRemaining > 0) startTimerAt(timeRemaining, timeLimit || 30);
-    $btnMidLobby.classList.toggle('hidden', !isHost);
+
     showScreen('screen-game');
   } else {
     showLobby(players, gameMode, winScore, false, roomName, isPublic);
