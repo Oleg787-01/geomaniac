@@ -634,7 +634,7 @@ Promise.all([
 function renderCountry(countryId) {
   if (!worldData) return;
   const features = topojson.feature(worldData, worldData.objects.countries).features;
-  const feature  = features.find(f => String(f.id) === String(countryId));
+  const feature  = features.find(f => String(f.id) === String(countryId).padStart(3, '0'));
   if (!feature) { $svgLoading.style.display = 'block'; $svgLoading.textContent = 'Outline unavailable.'; return; }
   $svgLoading.style.display = 'none';
   $svgEl.innerHTML = '';
